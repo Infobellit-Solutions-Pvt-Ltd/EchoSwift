@@ -1,4 +1,4 @@
-# Benchmark / Load-testing Suite by Infobellit AI Team
+# Benchmark / Load-testing Suite by Infobellit
 
 ## LLM Benchmarking For Model Inference
 
