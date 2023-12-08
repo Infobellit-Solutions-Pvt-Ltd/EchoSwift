@@ -32,4 +32,4 @@ The load test is designed to simulate continuous production load and observe the
 
 Metrics summary can be exported to CSV. This way multiple configuration can be scripted over. CSV file can be imported to Google Sheets/Excel or Jupyter for further analysis.
 
-See the README file inside [`llm_bench`](llm_bench) folder for more detailed usage on how to get the dataset and run the becnhmark.
+See the README file inside [`LLM_Inference_Benc`](LLM_Inference_Bench) folder for more detailed usage on how to get the dataset and run the becnhmark.
