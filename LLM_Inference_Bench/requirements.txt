@@ -1,0 +1,5 @@
+docker==5.0.3
+datasets==2.13.1
+transformers @ git+https://github.com/huggingface/transformers.git@0ad4e7e6dad670a7151aaceb1af3c272a3bf73a8
+locust==2.18.4
+
