@@ -7,12 +7,12 @@
 ## Summarizing the main aspects focused on:
 
 
-![Alt text](LLM_Inference_Bench_Tool.png)
+![Img](Asssets/LLM_Inference_Bench_Tool.png)
 The Benchmark tool mainly focusses on data collection ,analyzing the CPU and Memory requirements and load testing with varying number of Users.
 ## Performance metrics:
 
 
-![Alt text](Parameters.png)
+![Img](Assets/Parameters.png)
 
 The performance metrics captured while running the benchmark includes Latency,TTFT and Throughput for varying input and output tokens and parallel users. 
 # Follow the below steps to reproduce similar results
