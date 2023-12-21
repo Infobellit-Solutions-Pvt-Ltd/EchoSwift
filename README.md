@@ -7,7 +7,7 @@
 ## Summarizing the main aspects focused on:
 
 
-![Img](Asssets/LLM_Inference_Bench_Tool.png)
+![Img](Assets/LLM_Inference_Bench_Tool.png)
 The Benchmark tool mainly focusses on data collection ,analyzing the CPU and Memory requirements and load testing with varying number of Users.
 ## Performance metrics:
 
