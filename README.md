@@ -70,4 +70,4 @@ python llm_result_analysis.py
 
 
 
-See the README file inside [LLM_Inference_Benchmark (PDF)]('LLM_Inference_bench') for more detailed usage on how to get the dataset and run the becnhmark.
+See the README file inside [LLM_Inference_Benchmark]('./Inference-Benchmark-tool-public 2.pdf') for more detailed usage on how to get the dataset and run the becnhmark.
