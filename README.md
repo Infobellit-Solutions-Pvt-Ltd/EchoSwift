@@ -28,9 +28,9 @@ pip install -r requirements.txt
 
 ## Download [Llama Tokenizer](https://huggingface.co/hf-internal-testing/llama-tokenizer)
 
-*Add tokenizer to the root directory.
+* Add tokenizer to the root directory.
 
-*Used to calculate no of Input and Output tokens while filtering the dataset and while running the load test. 
+* Used to calculate no of Input and Output tokens while filtering the dataset and while running the load test. 
  
 ## Dataset Filtering
 
