@@ -40,7 +40,7 @@ Here the dataset used is [ShareGPT](https://huggingface.co/datasets/pvduy/shareg
 * 1000 prompts are filtered out for each token length specified above.
 
 ```bash
-python Dataset_Filtering.py --Total_Prompts 1000
+python3 Dataset_Filtering.py --Total_Prompts 1000
 ```
 ## Profiling Memory/CPU
 
@@ -53,7 +53,7 @@ python Dataset_Filtering.py --Total_Prompts 1000
 * Varying Input tokens "[32,64,128,256,512]" and Output tokens "[32,64,128,256,512]"
 
 ```bash
-python sut_loop_wrapper.py
+python3 sut_loop_wrapper.py
 ```
 
 * The above command runs the load test  and profiles the CPU/Memory utilization
@@ -65,7 +65,7 @@ python sut_loop_wrapper.py
 * All the CSV's received are further processed by running llm_result_analysis and the throughput, latency, ttft are analyzed with the help of graph generated.
 
 ```bash
-python llm_result_analysis.py
+python3 llm_result_analysis.py
 ```
 
 
