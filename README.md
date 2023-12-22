@@ -67,7 +67,8 @@ python3 sut_loop_wrapper.py
 ```bash
 python3 llm_result_analysis.py
 ```
+![Sample_Output_plots](https://github.com/Infobellit-Solutions-Pvt-Ltd/LLM-Inference-Benchmark/assets/154504188/5ff09150-f419-4963-ac15-b03a0e61c554)
 
 
 
-See the README file inside [`LLM_Inference_Benchmark`](Inference-Benchmark-tool-public.pdf) for more detailed usage on how to get the dataset and run the becnhmark.
+Refer [`LLM_Inference_Benchmark_pdf`](Inference-Benchmark-tool-public.pdf) for more detailed usage on how to get the dataset and run the becnhmark.
