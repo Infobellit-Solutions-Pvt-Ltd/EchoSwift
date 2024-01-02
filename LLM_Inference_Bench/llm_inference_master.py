@@ -42,11 +42,12 @@ class APITestUser(HttpUser):
         self.i = 0
         self.max_requests = int(os.environ.get("MAX_REQUESTS", 10))
         self.max_new_tokens = int(os.environ.get('MAX_NEW_TOKENS', 128))
-        self.api_url = os.environ.get('API_URL', 'http://10.216.169.253:8080/generate')
+        self.api_url = os.environ.get('API_URL', '')
         self.dataset_file = os.environ.get('INPUT_DATASET', '')
         self.questions = self.load_dataset(self.dataset_file)
         self.output_file_path = os.environ.get('OUTPUT_FILE', 'output.csv')
         self.users_list = []
+
     @staticmethod
     def load_dataset(csv_file):
         """
@@ -61,11 +62,10 @@ class APITestUser(HttpUser):
         with open(csv_file, 'r') as file:
             reader = csv.DictReader(file)
             return [row['Input_Prompt'] for row in reader]
-        
+
     def on_start(self):
         self.users_list.append({'requests_made': 0, 'total_requests': 0})
-        
-        
+
     @task
     def generate_text(self):
         """
@@ -76,7 +76,7 @@ class APITestUser(HttpUser):
         """
         ttft = 0  # Time to first token
         chunk_list = bytearray()
-        
+
         if self.i > self.max_requests:
             self.environment.runner.quit()
 
@@ -110,7 +110,7 @@ class APITestUser(HttpUser):
         generated_text = ""
         try:
             last_chunk_data = json.loads(text)
-            print("==="*20)
+            print("===" * 20)
             generated_text += last_chunk_data.get("generated_text", "Not Found")
             print(f"Generated Text: {generated_text}")
         except (json.JSONDecodeError, KeyError):
@@ -121,15 +121,19 @@ class APITestUser(HttpUser):
         self.i += 1
         if self.i > self.max_requests:
             self.environment.runner.quit()
-        
+
         # Adding + 2 tokens to add the special tokens(bos/eos) in total no of tokens
         input_tokens = len(tokenizer.encode(data["inputs"]))
         output_tokens = len(tokenizer.encode(generated_text))
-        
+
         # end-to-end time for getting the response
-        latency = (end_time - start_time) * 1000 
-        throughput = (input_tokens + output_tokens) / (end_time - start_time)   # tokens/sec
-        time_per_token = (latency - ttft) / (output_tokens - 1)   # Token latency(ms/tokens)
+        latency = (end_time - start_time) * 1000
+        throughput = (input_tokens + output_tokens) / (end_time - start_time)  # tokens/sec
+        if output_tokens != 1:
+            time_per_token = (latency - ttft) / (output_tokens - 1)  # Token latency(ms/tokens)
+        else:
+            print("only one output token generated, time_per_token will be same as TTFT")
+            time_per_token = ttft
 
         # Convert start and stop times to datetime objects
         start_time = datetime.fromtimestamp(start_time).strftime('%Y-%m-%d %H:%M:%S.%f')
@@ -151,17 +155,17 @@ class APITestUser(HttpUser):
                 'end_time': end_time,
                 'input_tokens': input_tokens,
                 'output_tokens': output_tokens,
-                'latency(ms)': latency,
-                'throughput(tokens/second)': throughput,
-                'time_per_token(ms/tokens)': time_per_token,
-                'TTFT(ms)': ttft
+                'latency(ms)': f"{latency:.3f}",
+                'throughput(tokens/second)': f"{throughput:.3f}",
+                'time_per_token(ms/tokens)': f"{time_per_token:.3f}",
+                'TTFT(ms)': f"{ttft:.3f}"
             })
-            
+
     def on_stop(self):
         # Calculate the total requests made by all users
         total_requests_made = sum(user_data.get('requests_made', 0) for user_data in self.users_list)
         self.environment.runner.quit()
-        
+
         # Determine if all users have finished their requests
         if total_requests_made >= self.max_requests:
             self.environment.runner.quit()

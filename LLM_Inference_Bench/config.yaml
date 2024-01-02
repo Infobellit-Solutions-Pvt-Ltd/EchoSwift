@@ -1,0 +1,4 @@
+API_URL: ""
+HF_TOKEN: "your_hf_token"
+MODEL_NAME: meta-llama/Llama-2-7b-chat-hf
+PORT: 8181
