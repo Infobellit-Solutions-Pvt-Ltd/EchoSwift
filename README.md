@@ -1,4 +1,4 @@
-## LLM-Inference-Bench: Benchmarking LLM Inference by Infobellit
+![image](https://github.com/Infobellit-Solutions-Pvt-Ltd/LLM-Inference-Benchmark/assets/154504188/32b72cdf-7825-4661-aac8-cd2a06c127ed)## LLM-Inference-Bench: Benchmarking LLM Inference by Infobellit
 
 ## LLM-Inference-Bench Tool
 
@@ -53,19 +53,21 @@ python3 Dataset_Filtering.py --Total_Prompts 1000
 * Varying Input tokens "[32,64,128,256,512]" and Output tokens "[32,64,128,256,512]"
 
 ```bash
-python3 sut_loop_wrapper.py
+./run_benchmark.sh
 ```
-
-* The above command runs the load test  and profiles the CPU/Memory utilization
+* The above command starts server.py and client.py file.
+* Server.py invokes the Text generation inference container with the default resources, the model is loaded and the url is provided to the config.yaml file.
+* Client.py runs the locust script for load test and calls the container manager class in utils.py for monitoring and profiling containers and collects the CPU and 
+  memory utilization stats while running the benchmark. 
 * This way multiple configuration can be scripted over.
 * All the results will be saved into csv files, you can analyze the data.
 
 ## Benchmark Result Analysis
 
-* All the CSV's received are further processed by running llm_result_analysis and the throughput, latency, ttft are analyzed with the help of graph generated.
+* All the CSV's received are further processed by running app.py and the throughput, latency, ttft are analyzed with the help of graphs generated.
 
 ```bash
-python3 llm_result_analysis.py
+python3 app.py
 ```
 ![Sample_Output_plots](https://github.com/Infobellit-Solutions-Pvt-Ltd/LLM-Inference-Benchmark/assets/154504188/5ff09150-f419-4963-ac15-b03a0e61c554)
 
