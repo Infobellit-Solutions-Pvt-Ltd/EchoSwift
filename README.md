@@ -1,4 +1,4 @@
-![image](https://github.com/Infobellit-Solutions-Pvt-Ltd/LLM-Inference-Benchmark/assets/154504188/32b72cdf-7825-4661-aac8-cd2a06c127ed)## LLM-Inference-Bench: Benchmarking LLM Inference by Infobellit
+## LLM-Inference-Bench: Benchmarking LLM Inference by Infobellit
 
 ## LLM-Inference-Bench Tool
 
