@@ -1,22 +1,8 @@
 import threading
 import subprocess
-from util import ContainerManager, get_config
-import yaml
+from util import ContainerManager, get_config, load_config
 import os
 
-
-def load_config(file_path='./config.yaml'):
-    try:
-        with open(file_path, 'r') as file:
-            config = yaml.safe_load(file)
-        return config
-    except FileNotFoundError:
-        print(f"Error: {file_path} not found.")
-        return None
-
-def save_config(config, file_path='./config.yaml'):
-    with open(file_path, 'w') as file:
-        yaml.dump(config, file)
 
 class Benchmark:
 
