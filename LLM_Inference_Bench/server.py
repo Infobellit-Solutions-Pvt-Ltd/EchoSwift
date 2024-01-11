@@ -1,20 +1,6 @@
-from util import get_config, ContainerManager
+from util import get_config, ContainerManager, load_config, save_config
 import os
 import yaml
-
-
-def load_config(file_path='./config.yaml'):
-    try:
-        with open(file_path, 'r') as file:
-            config = yaml.safe_load(file)
-        return config
-    except FileNotFoundError:
-        print(f"Error: {file_path} not found.")
-        return None
-
-def save_config(config, file_path='./config.yaml'):
-    with open(file_path, 'w') as file:
-        yaml.dump(config, file)
 
 
 def main(var: ContainerManager):
@@ -41,10 +27,6 @@ def main(var: ContainerManager):
     var.plot(stats)
 
     print("Model loaded Successfully.")
-
-    
-    #os.environ["API_URL"] = url
-
     
     if existing_config:
         url = f"http://localhost:{var.port}/generate_stream"
