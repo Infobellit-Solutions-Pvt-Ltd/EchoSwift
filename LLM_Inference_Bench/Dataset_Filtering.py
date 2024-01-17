@@ -17,12 +17,12 @@ class DataFiltering:
         "_2048": (2000, 2100),
     }
 
-    def __init__(self, dataset, tokenizer_path_or_repo_id, base_folder, prompts):
+    def __init__(self, dataset, tokenizer_path_or_repo_id, base_folder):
         # Initialize DataFiltering instance
         self.tokenizer = AutoTokenizer.from_pretrained(tokenizer_path_or_repo_id)
         self.dataset_name = dataset
         self.base_folder = base_folder
-        self.no_of_prompts = prompts
+        self.no_of_prompts = 1000
         self.output_filename = "dataset_info.csv"
 
     def filter(self):
@@ -79,25 +79,12 @@ class DataFiltering:
         new_df.to_csv(outputfile, index=False)
 
 
-def get_args():
-    # Parse command-line arguments
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--Total_Prompts", type=int, default=1000, help="Total Number of Prompts to Filter out.")
-    args = parser.parse_args()
-    return args
-
-
 if __name__ == "__main__":
     # Main execution
-    args = get_args()
+    
     dataset_name = "pvduy/sharegpt_alpaca_oa_vicuna_format"
-    BASE_FOLDER = "Input_Datasets"
-    tokenizer_path = "./Tokenizer"
-    filter_tool = DataFiltering(dataset=dataset_name, tokenizer_path_or_repo_id=tokenizer_path, base_folder=BASE_FOLDER,
-                                prompts=args.Total_Prompts)
-
-    try:
-        filter_tool.filter()
-        filter_tool.extract_info()
-    except Exception as e:
-        print(f"Error: {e}")
+    BASE_FOLDER = "Input_Dataset"
+    tokenizer_path = "hf-internal-testing/llama-tokenizer"
+    filter_tool = DataFiltering(dataset=dataset_name, tokenizer_path_or_repo_id=tokenizer_path, base_folder=BASE_FOLDER)
+    filter_tool.filter()
+    filter_tool.extract_info()
