@@ -11,7 +11,6 @@
 The Benchmark tool mainly focusses on data collection ,analyzing the CPU and Memory requirements and load testing with varying number of Users.
 ## Performance metrics:
 
-
 ![Img](Assets/Parameters.png)
 
 The performance metrics captured while running the benchmark includes Latency,TTFT and Throughput for varying input and output tokens and parallel users. 
@@ -32,21 +31,16 @@ source myenv/bin/activate
 pip install -r requirements.txt
 ```
 
-## Download [Llama Tokenizer](https://huggingface.co/hf-internal-testing/llama-tokenizer)
-
-* Add tokenizer to the root directory.
-
-* Used to calculate no of Input and Output tokens while filtering the dataset and while running the load test. 
- 
 ## Dataset Filtering
 
 Here the dataset used is [ShareGPT](https://huggingface.co/datasets/pvduy/sharegpt_alpaca_oa_vicuna_format/viewer/default/train?p=1) Dataset from Hugging Face datasets.
+* This dataset contains 324k rows of training data.
 * ShareGPT dataset has been filtered based on varying input token length.
 * Different Input Token Lengths considered are 32,64,128,256,512,1k,2k
 * 1000 prompts are filtered out for each token length specified above.
 
 ```bash
-python3 Dataset_Filtering.py --Total_Prompts 1000
+python3 Dataset_Filtering.py
 ```
 ## Profiling Memory/CPU
 
@@ -54,9 +48,9 @@ python3 Dataset_Filtering.py --Total_Prompts 1000
 
 ## Run the Load Test
 
-* Define the configurations  you want to test with in the ["locust.sh"] shell script.
-* List of parallel users that we tested "[1,3,10,30]".
-* Varying Input tokens "[32,64,128,256,512]" and Output tokens "[32,64,128,256,512]"
+* Define the configurations required to run different tests in the ["locust.sh"] shell script.
+* List of parallel users "(1 3 10 30)".
+* Varying Input tokens "(32,64,128,256,512)" and Output tokens "(32,64,128,256,512)"
 
 ```bash
 ./run_benchmark.sh
@@ -70,11 +64,12 @@ python3 Dataset_Filtering.py --Total_Prompts 1000
 
 ## Benchmark Result Analysis
 
-* All the CSV's received are further processed by running app.py and the throughput, latency, ttft are analyzed with the help of graphs generated.
+* All the CSV's received are further processed by running app.py and the throughput, latency, ttft can be analyzed with the help of plots generated.
 
 ```bash
 python3 app.py
 ```
+
 ![Sample_Output_plots](https://github.com/Infobellit-Solutions-Pvt-Ltd/LLM-Inference-Benchmark/assets/154504188/5ff09150-f419-4963-ac15-b03a0e61c554)
 
 
