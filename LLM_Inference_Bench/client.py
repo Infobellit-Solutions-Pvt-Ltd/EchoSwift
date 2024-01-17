@@ -77,8 +77,6 @@ class Benchmark:
 
 
 if __name__ == "__main__":
-
-    #models_list = ["meta-llama/Llama-2-7b-chat-hf"]
     var = ContainerManager(get_config())
 
     bench = Benchmark(var)
