@@ -23,8 +23,8 @@ def save_config(config, file_path='./config.yaml'):
 
 def get_config():
     configurations = {"cpu_mem": []}
-    cpus = [96]
-    memory = [128]
+    cpus = [16]
+    memory = [24]
 
     for mem in memory:
         for cpu in cpus:
@@ -59,7 +59,7 @@ class ContainerManager:
             "-d",
             "--name", self.container_name,
             "--cpus", f'{cpus}',
-            "--cpuset-cpus", "0-95",
+            "--cpuset-cpus", f"0-{cpus - 1}",
             "--memory", f'{memory}GiB',
             "--shm-size", "1g",
             "-e", f"HUGGING_FACE_HUB_TOKEN={self.token}",
