@@ -2,7 +2,7 @@
 
 ## LLM-Inference-Bench Tool
 
- The objective of the LLM Inference Bench Tool is to identify the Latency of each request made and measured in millisecond/token,Time Taken for the First Token (TTFT) and the Throughput measured in number of tokens/second. The above metrics is measured with varying Input Tokens (Query Length), Output Tokens (Response Length) and Simulating Parallel Users.
+ The objective of the LLM Inference Bench Tool is to identify the Latency of each request made and measured in millisecond/token,Time To First Token (TTFT) and the Throughput measured in number of tokens/second. The above metrics is measured with varying Input Tokens (Query Length), Output Tokens (Response Length) and Simulating Parallel Users.
 
 ## Summarizing the main aspects focused on:
 
@@ -57,9 +57,9 @@ python3 Dataset_Filtering.py
 ```
 * The above command starts the TGI server and runs the benchmark against the generation endpoint.
 * Server.py starts Text generation inference container with the default resources, once the model is loaded and the generation endpoint gets added to the config.yaml file.
-* Client.py runs the locust script for load test and calls the container manager class in utils.py for monitoring and profiling containers and collects the CPU and memory utilization stats while running the benchmark. 
+* Client.py runs the locust script for load test and calls the container manager class in utils.py for monitoring and profiling containers and collects the CPU and Memory utilization stats while running the benchmark. 
 * This way multiple configuration can be scripted over.
-* The results(Latency, Throughput, TTFT & CPU/Mem Percentages) will be saved as csv files.
+* The results(throughput, latency, ttft & CPU/Mem Percentages) will be saved as csv files.
 
 ## Benchmark Result Analysis
 
@@ -69,7 +69,7 @@ python3 Dataset_Filtering.py
 python3 app.py
 ```
 
-* The above command starts up a streamlit application which displays the generated plots for Latency, Throughput and TTFT
+* The above command starts up a streamlit application which displays the generated plots.
 
 ![Sample_Output_plots](https://github.com/Infobellit-Solutions-Pvt-Ltd/LLM-Inference-Benchmark/assets/154504188/5ff09150-f419-4963-ac15-b03a0e61c554)
 
