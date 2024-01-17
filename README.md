@@ -19,6 +19,12 @@ The performance metrics captured while running the benchmark includes Latency,TT
 
 ## Setup the Environment
 
+### Create a Virtual Environment and activate it before installing the dependencies.
+```bash
+python3 -m venv myenv
+source myenv/bin/activate
+```
+
 ### Install the Dependencies
 * The Inference Benchmark load test relies on [Locust package](https://locust.io/). Install it from pip.
 
