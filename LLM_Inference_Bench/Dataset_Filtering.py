@@ -81,10 +81,11 @@ class DataFiltering:
 
 if __name__ == "__main__":
     # Main execution
-    
+   
     dataset_name = "pvduy/sharegpt_alpaca_oa_vicuna_format"
     BASE_FOLDER = "Input_Dataset"
     tokenizer_path = "hf-internal-testing/llama-tokenizer"
     filter_tool = DataFiltering(dataset=dataset_name, tokenizer_path_or_repo_id=tokenizer_path, base_folder=BASE_FOLDER)
+
     filter_tool.filter()
     filter_tool.extract_info()

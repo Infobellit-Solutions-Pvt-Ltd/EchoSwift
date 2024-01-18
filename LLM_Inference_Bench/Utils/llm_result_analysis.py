@@ -88,34 +88,6 @@ def plot_metric(data, directory, ylabel,output_file,fmt):
     plt.savefig(output_file)
     
     return fig
-
-
-# def main():
-#     st.title("LLM-Inference Results Analysis")
-
-#     for directory in directories:
-#         result_dict = process_csv_files(directory)
-#         token_latency = result_dict["token latency"]
-#         throughput = result_dict["throughput"]
-#         ttft = result_dict["ttft"]
-#         head = directory.split("/")[-1]
-#         st.header(f"Results for {head}")
-        
-#         # Plot Token Latency
-#         st.subheader("Token Latency")
-#         fig_latency = plot_metric(token_latency, directory, 'Token Latency (ms/tokens)', f"{directory}_token_latency.png", '%d')
-#         st.pyplot(fig_latency)
-
-#         # Plot Throughput
-#         st.subheader("Throughput")
-#         fig_throughput = plot_metric(throughput, directory, 'Throughput (Tokens/second)',f"{directory}_throughput.png", '%.2f')
-#         st.pyplot(fig_throughput)
-
-#         # Plot TTFT
-#         st.subheader("TTFT")
-#         fig_ttft = plot_metric(ttft, directory, 'TTFT (ms)', f"{directory}_ttft.png", '%d')
-#         st.pyplot(fig_ttft)
-        
         
 def main():
     st.title("LLM-Inference Benchmark Results")

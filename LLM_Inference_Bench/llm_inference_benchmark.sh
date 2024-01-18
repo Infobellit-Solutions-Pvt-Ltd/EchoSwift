@@ -4,11 +4,11 @@ export MAX_REQUESTS=5
 USER_COUNTS=(1)
 # (1 3 10 30 100)
 INPUT_TOKENS=(32)
-# (32 64 128 256 512)
+# (32 64 128 256 512 1024 2048)
 OUTPUT_TOKENS=(64)
-# (32 64 128 256 512)
-DATASET_DIR="Input_Dataset"
-api_url='${API_URL}'
+# (4 8 16 32 64 128 256 512 1024 2048)
+DATASET_DIR="Input_Dataset"  # Update this with the correct input_dataset path
+api_url=$2
 AGGREGATED_DIR=$1
 
 

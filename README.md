@@ -11,7 +11,7 @@
 The Benchmark tool mainly focusses on data collection ,analyzing the CPU and Memory requirements and load testing with varying number of Users.
 ## Performance metrics:
 
-![Img](LLM_Inference_Bench/images/Parameters.png)
+![Img](LLM_Inference_Bench/images/Metrics.png)
 
 The performance metrics captured while running the benchmark includes Latency,TTFT and Throughput for varying input and output tokens and parallel users. 
 # Follow the below steps to reproduce similar results
@@ -40,40 +40,30 @@ Here the dataset used is [ShareGPT](https://huggingface.co/datasets/pvduy/shareg
 * 1000 prompts are filtered out for each token length specified above.
 
 ```bash
-python3 Dataset_Filtering.py
+python3 dataset_filtering.py
 ```
-## Profiling Memory/CPU
 
-* CPU and Memory Percentage utilization are observed while running the load test with varying no of parallel users, along with varying Input and Output tokens.
+## Run the Load Test using Locust
 
-## Run the Load Test
-
-* Define the configurations required to run different tests in the ["locust.sh"] shell script.
+* Define the configurations required to run different tests in the ["llm_inference_benchmark.sh"] shell script.
 * List of parallel users "(1 3 10 30)".
 * Varying Input tokens "(32 64 128 256 512)" and Output tokens "(32 64 128 256 512)"
 
+* Add the required arguments to execute the below command (output_dir to save the results and the generation_endpoint to run the benchmark).
+
 ```bash
-./run_benchmark.sh
+./llm_inference_benchmark.sh <output_dir> <generation_endpoint>
 ```
-* The above command starts the TGI server and runs the benchmark against the generation endpoint.
-* Server.py starts Text generation inference container with the default resources, once the model is loaded and the generation endpoint gets added to the config.yaml file.
-* Client.py runs the locust script for load test and calls the container manager class in utils.py for monitoring and profiling containers and collects the CPU and Memory utilization stats while running the benchmark. 
-* This way multiple configuration can be scripted over.
-* The results(throughput, latency, ttft & CPU/Mem Percentages) will be saved as csv files.
+
 
 ## Benchmark Result Analysis
 
-* All the CSV's received are further processed by running app.py and the throughput, latency, ttft can be analyzed with the help of plots generated.
+* All the CSV's received are further processed by running llm_result_analysis.py and the throughput, latency, ttft can be analyzed with the help of plots generated.
 
 ```bash
-python3 app.py
+python3 llm_result_analysis.py
 ```
 
 * The above command starts up a streamlit application which displays the generated plots.
 
-
-
-
-
-
-
+Refer [`LLM_Inference_Benchmark_pdf`](Inference-Benchmark-tool-public.pdf) for more detailed usage on how to get the dataset and run the benchmark.

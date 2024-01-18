@@ -1,13 +1,11 @@
-import json
-from locust import HttpUser, task, between
+from locust import HttpUser, task
 import random
 import time
 import csv
 from transformers import AutoTokenizer
 import os
-import sys
 from datetime import datetime
-from locust.exception import StopUser
+import json
 
 # Initialize the tokenizer for encoding/decoding text
 tokenizer = AutoTokenizer.from_pretrained("hf-internal-testing/llama-tokenizer")
