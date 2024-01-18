@@ -47,9 +47,10 @@ python3 dataset_filtering.py
 
 * Define the configurations required to run different tests in the ["llm_inference_benchmark.sh"] shell script.
 * List of parallel users "(1 3 10 30)".
-* Varying Input tokens "(32 64 128 256 512)" and Output tokens "(32 64 128 256 512)"
+* Varying Input tokens "(32 64 128 256 512)" and Output tokens "(32 64 128 256 512)".
 
 * Add the required arguments to execute the below command (output_dir to save the results and the generation_endpoint to run the benchmark).
+* The generation_endpoint here can be any inference server endpoint,For example TGI Endpoint hosting a model (http://localhost:8080/generate_stream).
 
 ```bash
 ./llm_inference_benchmark.sh <output_dir> <generation_endpoint>
