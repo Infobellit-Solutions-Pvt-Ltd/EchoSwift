@@ -71,8 +71,9 @@ python3 app.py
 
 * The above command starts up a streamlit application which displays the generated plots.
 
-![Sample_Output_plots](https://github.com/Infobellit-Solutions-Pvt-Ltd/LLM-Inference-Benchmark/assets/154504188/5ff09150-f419-4963-ac15-b03a0e61c554)
 
 
 
-Refer [`LLM_Inference_Benchmark_pdf`](Inference-Benchmark-tool-public.pdf) for more detailed usage on how to get the dataset and run the benchmark.
+
+
+
