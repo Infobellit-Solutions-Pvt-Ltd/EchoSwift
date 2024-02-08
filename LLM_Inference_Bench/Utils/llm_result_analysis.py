@@ -130,10 +130,7 @@ def main():
 
 if __name__ == "__main__":
     
-    base_folder = os.environ.get("BASE_FOLDER", "")
-    if base_folder:
-        base_directory = rf"{base_folder}/postloading/Locust_Test_Results/192"
-    base_directory = r"Llama-2-7b-chat-hf/BIOS_!_SUT_128m/postloading/Locust_Test_Results/192"
+    base_directory = r"Llama-2-7b-chat-hf/postloading/Locust_Test_Results"
     directories = process_directory(base_directory)
 
     input_token_lengths = ["32_input_token", "64_input_token", "128_input_token", "256_input_token"]
