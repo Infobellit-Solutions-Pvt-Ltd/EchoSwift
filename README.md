@@ -7,11 +7,11 @@
 ## Summarizing the main aspects focused on:
 
 
-![Img](LLM_Inference_Bench/images/LLM_Inference_Bench_Tool.png)
+![Img](EchoSwift/images/LLM_Inference_Bench_Tool.png)
 The Benchmark tool mainly focusses on data collection ,analyzing the CPU and Memory requirements and load testing with varying number of Users.
 ## Performance metrics:
 
-![Img](LLM_Inference_Bench/images/Metrics.png)
+![Img](EchoSwift/images/Metrics.png)
 
 The performance metrics captured while running the benchmark includes Latency,TTFT and Throughput for varying input and output tokens and parallel users. 
 # Follow the below steps to reproduce similar results
