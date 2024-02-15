@@ -1,6 +1,6 @@
-## LLM-Inference-Bench: Benchmarking LLM Inference by Infobellit
+## EchoSwift: Benchmarking LLM Inference by Infobellit
 
-## LLM-Inference-Bench Tool
+## EchoSwift
 
  The objective of the LLM Inference Bench Tool is to identify the Latency of each request made and measured in millisecond/token,Time To First Token (TTFT) and the Throughput measured in number of tokens/second. The above metrics is measured with varying Input Tokens (Query Length), Output Tokens (Response Length) and Simulating Parallel Users.
 
