@@ -7,7 +7,7 @@
 ## Summarizing the main aspects focused on:
 
 
-![Img](EchoSwift/images/LLM_Inference_Bench_Tool.png)
+![Img](EchoSwift/images/Echoswift.png)
 The Benchmark tool mainly focusses on data collection ,analyzing the CPU and Memory requirements and load testing with varying number of Users.
 ## Performance metrics:
 
