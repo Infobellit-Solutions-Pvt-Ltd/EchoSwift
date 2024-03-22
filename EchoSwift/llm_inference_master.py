@@ -90,7 +90,7 @@ class APITestUser(HttpUser):
         for i, chunk in enumerate(response.iter_content()):
             if chunk and i == 0:
                 chunk_list.extend(chunk)
-                ttft = (time.perf_counter() - start_time) * 1000
+                ttft = (time.perf_counter() - start_time)
                 print(f"First token generation time: {ttft} ms")
             chunk_list.extend(chunk)
 
@@ -120,18 +120,18 @@ class APITestUser(HttpUser):
         if self.i > self.max_requests:
             self.environment.runner.quit()
 
-        # Adding + 2 tokens to add the special tokens(bos/eos) in total no of tokens
         input_tokens = len(tokenizer.encode(data["inputs"]))
         output_tokens = len(tokenizer.encode(generated_text))
 
         # end-to-end time for getting the response
-        latency = (end_time - start_time) * 1000
-        throughput = (input_tokens + output_tokens) / (end_time - start_time)  # tokens/sec
+        latency = (end_time - start_time)
+        
+        throughput = (output_tokens - 1) / (latency - ttft)  # tokens/sec
         if output_tokens != 1:
-            time_per_token = (latency - ttft) / (output_tokens - 1)  # Token latency(ms/tokens)
+            latency_per_token = (latency - ttft)* 1000 / (output_tokens - 1)  # Token latency(ms/tokens)
         else:
-            print("only one output token generated, time_per_token will be same as TTFT")
-            time_per_token = ttft
+            print("only one output token generated, latency_per_token will be same as TTFT")
+            latency_per_token = ttft* 1000
 
         # Convert start and stop times to datetime objects
         start_time = datetime.fromtimestamp(start_time).strftime('%Y-%m-%d %H:%M:%S.%f')
@@ -140,7 +140,7 @@ class APITestUser(HttpUser):
         # Log the results to the output CSV file
         with open(self.output_file_path, 'a', newline='') as csvfile:
             fieldnames = ['request', 'start_time', 'end_time', 'input_tokens',
-                          'output_tokens', 'latency(ms)', 'throughput(tokens/second)', 'time_per_token(ms/tokens)',
+                          'output_tokens', 'latency(ms)', 'throughput(tokens/second)', 'latency_per_token(ms/tokens)',
                           'TTFT(ms)']
             writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
 
@@ -153,10 +153,10 @@ class APITestUser(HttpUser):
                 'end_time': end_time,
                 'input_tokens': input_tokens,
                 'output_tokens': output_tokens,
-                'latency(ms)': f"{latency:.3f}",
+                'latency(ms)': f"{latency* 1000:.3f}",
                 'throughput(tokens/second)': f"{throughput:.3f}",
-                'time_per_token(ms/tokens)': f"{time_per_token:.3f}",
-                'TTFT(ms)': f"{ttft:.3f}"
+                'latency_per_token(ms/tokens)': f"{latency_per_token:.3f}",
+                'TTFT(ms)': f"{ttft* 1000:.3f}"
             })
 
     def on_stop(self):
