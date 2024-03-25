@@ -3,7 +3,7 @@ import csv
 
 
 def calculate_averages(input_csv_filename, output_csv_filename, tokens):
-    column_names = ["throughput(tokens/second)", "latency(ms)", "TTFT(ms)", "time_per_token(ms/tokens)"]
+    column_names = ["throughput(tokens/second)", "latency(ms)", "TTFT(ms)", "latency_per_token(ms/tokens)"]
     with open(input_csv_filename, 'r', newline='') as file:
         reader = csv.reader(file)
         rows = list(reader)
@@ -55,5 +55,5 @@ if __name__ == '__main__':
     calculate_averages(args.input_csv_filename, args.output_csv_filename, args.tokens)
 
 
-# command to run this file
-#  python3 avg_locust_results.py --input_csv_filename "Llama-2-7b-chat-hf/SUT_32m/postloading/Locust_Test_Results/1_User/32_input_tokens.csv" --output_csv_filename "Llama-2-7b-chat-hf/SUT_32m/postloading/Locust_Test_Results/1_User/avg_32_input_tokens.csv" --tokens 64 128 256
+''' example command to run this file
+python3 avg_locust_results.py --input_csv_filename "Llama-2-7b-chat-hf/SUT_32m/postloading/Locust_Test_Results/1_User/32_input_tokens.csv" --output_csv_filename "Llama-2-7b-chat-hf/SUT_32m/postloading/Locust_Test_Results/1_User/avg_32_input_tokens.csv" --tokens 64 128 256 '''
