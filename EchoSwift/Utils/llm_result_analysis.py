@@ -51,7 +51,7 @@ def process_csv_files(directory_path):
         # Iterate through each row in the DataFrame
         for index, row in df.iterrows():
             output_token = row['output tokens']
-            token_latency = row['time_per_token(ms/tokens)']
+            token_latency = row['latency_per_token(ms/tokens)']
             throughput = row['throughput(tokens/second)']
             ttft = row['TTFT(ms)']
  
@@ -80,7 +80,7 @@ def plot_metric(data, directory, ylabel,output_file,fmt):
         multiplier += 1
 
     ax.set_ylabel(ylabel)
-    ax.set_title(f"SUT with Container_config - (48 cores & 128G) for {(directory.split(os.path.sep))[-1]}", fontdict=title_prop)
+    ax.set_title(f"Results for {(directory.split(os.path.sep))[-1]}", fontdict=title_prop)
     ax.set_xticks(x + width * (l / 2))
     ax.set_xticklabels(input_token_lengths)
     ax.legend(loc='upper left', bbox_to_anchor=(1, 1), title="Output Tokens")
@@ -129,8 +129,10 @@ def main():
         st.pyplot(fig_ttft)
 
 if __name__ == "__main__":
-    
+
+    # Path to the csv files 
     base_directory = r"Llama-2-7b-chat-hf/postloading/Locust_Test_Results"
+    
     directories = process_directory(base_directory)
 
     input_token_lengths = ["32_input_token", "64_input_token", "128_input_token", "256_input_token"]
