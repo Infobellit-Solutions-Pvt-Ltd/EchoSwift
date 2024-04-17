@@ -45,7 +45,7 @@ python3 dataset_filtering.py
 
 ## Run the Load Test using Locust
 
-* Define the configurations required to run different tests in the ["llm_inference_benchmark.sh"] shell script.
+* Define the configurations required to run different tests in the [llm_inference_benchmark.sh](llm_inference_benchmark.sh) shell script.
 * List of parallel users "(1 3 10 30)".
 * Varying Input tokens "(32 64 128 256 512)" and Output tokens "(32 64 128 256 512)".
 
