@@ -53,7 +53,7 @@ python3 dataset_filtering.py
 * The generation_endpoint here can be any inference server endpoint,For example TGI Endpoint hosting a model (http://localhost:8080/generate_stream).
 
 ```bash
-./llm_inference_benchmark.sh <output_dir> <generation_endpoint>
+./llm_inference_benchmark.sh <output_dir> <generation_endpoint> <inference_server> <model_name>
 ```
 
 
@@ -62,7 +62,7 @@ python3 dataset_filtering.py
 * All the CSV's received are further processed by running llm_result_analysis.py and the throughput, latency, ttft can be analyzed with the help of plots generated.
 
 ```bash
-python3 llm_result_analysis.py
+Utils/python3 llm_result_analysis.py
 ```
 
 * The above command starts up a streamlit application which displays the generated plots.
