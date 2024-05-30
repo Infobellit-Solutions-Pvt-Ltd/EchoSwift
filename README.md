@@ -55,7 +55,7 @@ python3 dataset_filtering.py
 ```bash
 ./llm_inference_benchmark.sh <output_dir> <generation_endpoint> <inference_server> <model_name>
 ```
-**Note**
+**Note:**
 If inference server is Ollama then you should pass the modelname, otherwise not required.
 
 ## Benchmark Result Analysis
