@@ -1,43 +1,36 @@
-from locust import HttpUser, task
-import random
-import time
-import csv
-from transformers import AutoTokenizer
 import os
+import csv
+import time
+import random
+import logging
 from datetime import datetime
+from locust import HttpUser, task
+from transformers import AutoTokenizer
+from threading import Barrier, BrokenBarrierError
+
 import json
+
+# Configure logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s %(levelname)s %(message)s')
 
 # Initialize the tokenizer for encoding/decoding text
 tokenizer = AutoTokenizer.from_pretrained("hf-internal-testing/llama-tokenizer")
 
+# Global barrier to synchronize users
+num_users = int(os.environ.get("NUM_USERS", 10))
+barrier = Barrier(num_users)
 
 class APITestUser(HttpUser):
     """
     Represents a Locust user for load testing an API.
-
-    Attributes:
-        i (int): Counter for the number of requests made.
-        max_requests (int): Maximum number of requests to be made.
-        max_new_tokens (int): Maximum number of tokens in each API request.
-        api_url (str): URL of the API to be tested.
-        questions_file (str): Path to the CSV file containing questions.
-        questions (list): List of questions loaded from the CSV file.
-        output_file (str): Path to the output CSV file for logging results.
     """
 
     def __init__(self, *args, **kwargs):
         """
         Initialize the APITestUser instance.
-
-        Args:
-            *args: Variable length argument list.
-            **kwargs: Arbitrary keyword arguments.
-
-        Raises:
-            ValueError: If required environment variables are not set.
         """
         super().__init__(*args, **kwargs)
-        self.i = 0
+        self.request_count = 0
         self.max_requests = int(os.environ.get("MAX_REQUESTS", 10))
         self.max_new_tokens = int(os.environ.get('MAX_NEW_TOKENS', 128))
         self.api_url = os.environ.get('API_URL', '')
@@ -45,17 +38,13 @@ class APITestUser(HttpUser):
         self.questions = self.load_dataset(self.dataset_file)
         self.output_file_path = os.environ.get('OUTPUT_FILE', 'output.csv')
         self.users_list = []
+        self.provider = os.environ.get('PROVIDER', " ")
+        self.model_name = os.environ.get('MODEL_NAME', " ")
 
     @staticmethod
     def load_dataset(csv_file):
         """
         Read questions from a CSV file.
-
-        Args:
-            csv_file (str): Path to the CSV file.
-
-        Returns:
-            list: List of questions.
         """
         with open(csv_file, 'r') as file:
             reader = csv.DictReader(file)
@@ -64,106 +53,181 @@ class APITestUser(HttpUser):
     def on_start(self):
         self.users_list.append({'requests_made': 0, 'total_requests': 0})
 
+    def format_prompt(self):
+        """
+        Format the prompt for the API request.
+        """
+        prompt = random.choice(self.questions)
+
+        if self.provider == "TGI":
+            data = {'inputs': prompt, 'parameters': {'max_new_tokens': self.max_new_tokens}}
+        elif self.provider == "Ollama":
+            data = {
+                "model": self.model_name, 
+                "prompt": prompt, 
+                "stream": True, 
+                "options": {"num_predict": self.max_new_tokens}
+            }
+        elif self.provider == "Llamacpp":
+            data = {"prompt": prompt, "n_predict": self.max_new_tokens, "stream": True}
+
+        input_tokens = len(tokenizer.encode(prompt))
+        return data, input_tokens
+
+    def process_response(self, response):
+        """
+        Process the response from the API.
+        """
+        generated_text = ""
+        ttft = None
+        provider_handlers = {
+            "TGI": self._process_tgi_response,
+            "Ollama": self._process_ollama_response,
+            "Llamacpp": self._process_llamacpp_response
+        }
+
+        handler = provider_handlers.get(self.provider, None)
+        if handler:
+            generated_text, ttft = handler(response)
+
+        output_tokens = len(tokenizer.encode(generated_text))
+        return generated_text, output_tokens, ttft
+
+    def _process_tgi_response(self, response):
+        """
+        Process the response for TGI provider.
+        """
+        generated_text = ""
+        ttft = None
+        # start_time = time.perf_counter()
+
+        for i, chunk in enumerate(response.iter_lines()):
+            if chunk and i == 0 and ttft is None:
+                ttft = (time.perf_counter() - start_time)
+                logging.info(f"TTFT: {ttft*1000:.3f} ms")
+
+            decoded_chunk = chunk.decode("utf-8")
+            if "data:" in decoded_chunk:
+                json_data = decoded_chunk.split("data:")[1]
+                json_data = json.loads(json_data)
+                token = json_data["token"]["text"]
+                generated_text += token
+
+        return generated_text, ttft
+
+    def _process_ollama_response(self, response):
+        """
+        Process the response for Ollama provider.
+        """
+        generated_text = ""
+        ttft = None
+        # start_time = time.perf_counter()
+
+        for i, chunk in enumerate(response.iter_lines()):
+            if chunk and i == 0 and ttft is None:
+                ttft = (time.perf_counter() - start_time)
+                logging.info(f"TTFT: {ttft*1000:.3f} ms")
+
+            decoded_chunk = chunk.decode('utf-8')
+            if decoded_chunk:
+                json_data = json.loads(decoded_chunk)
+                token = json_data["response"]
+                generated_text += token
+
+        return generated_text, ttft
+
+    def _process_llamacpp_response(self, response):
+        """
+        Process the response for Llamacpp provider.
+        """
+        generated_text = ""
+        ttft = None
+        for i, chunk in enumerate(response.iter_lines()):
+            if chunk and i == 0 and ttft is None:
+                ttft = (time.perf_counter() - start_time)
+                logging.info(f"TTFT: {ttft*1000:.3f} ms")
+
+            decoded_chunk = chunk.decode("utf-8")
+            if "data:" in decoded_chunk:
+                json_data = decoded_chunk.split("data:")[1]
+                json_data = json.loads(json_data)
+                token = json_data["content"]
+                generated_text += token
+
+        return generated_text, ttft
+
     @task
     def generate_text(self):
         """
         Task to generate text using the API and log the results.
-
-        Raises:
-            ValueError: If the API request fails.
         """
-        ttft = 0  # Time to first token
-        chunk_list = bytearray()
-
-        if self.i > self.max_requests:
+        if self.request_count > self.max_requests:
             self.environment.runner.quit()
 
-        # Randomly select a prompt from the list of questions
-        selected_prompt = random.choice(self.questions)
-        data = {'inputs': selected_prompt, 'parameters': {'max_new_tokens': self.max_new_tokens}}
+        input_data, input_tokens = self.format_prompt()
 
         # Record the start time of the API request
+        global start_time
         start_time = time.perf_counter()
-        response = self.client.post(self.api_url, json=data, stream=True)
+        response = self.client.post(self.api_url, json=input_data, stream=True)
 
-        # Iterate over the content received in chunks
-        for i, chunk in enumerate(response.iter_content()):
-            if chunk and i == 0:
-                chunk_list.extend(chunk)
-                ttft = (time.perf_counter() - start_time)
-                print(f"First token generation time: {ttft} ms")
-            chunk_list.extend(chunk)
+        generated_text, output_tokens, ttft = self.process_response(response)
 
-        combined_texts = []
-        decoded_chunks = chunk_list.decode("utf-8").split("\n")
-        for text in decoded_chunks:
-            if text == '':
-                pass
-            else:
-                combined_texts.append(text)
-
-        text = combined_texts[-1].replace("data:", '')
-
-        # Try to extract the generated text from the last chunk
-        generated_text = ""
-        try:
-            last_chunk_data = json.loads(text)
-            print("===" * 20)
-            generated_text += last_chunk_data.get("generated_text", "Not Found")
-            print(f"Generated Text: {generated_text}")
-        except (json.JSONDecodeError, KeyError):
-            print("Failed to extract generated text from the response.")
+        logging.info(f"Generated Text: {generated_text}")
 
         # Record the end time of the API request
         end_time = time.perf_counter()
-        self.i += 1
-        if self.i > self.max_requests:
-            self.environment.runner.quit()
 
-        input_tokens = len(tokenizer.encode(data["inputs"]))
-        output_tokens = len(tokenizer.encode(generated_text))
-
-        # end-to-end time for getting the response
+        # End-to-end time for getting the response
         latency = (end_time - start_time)
-        
-        throughput = (output_tokens - 1) / (latency - ttft)  # tokens/sec
-        if output_tokens != 1:
-            latency_per_token = (latency - ttft)* 1000 / (output_tokens - 1)  # Token latency(ms/tokens)
-        else:
-            print("only one output token generated, latency_per_token will be same as TTFT")
-            latency_per_token = ttft* 1000
+
+        throughput = (output_tokens - 1) / (latency - ttft) if output_tokens != 1 else float('inf')
+        latency_per_token = (latency - ttft) * 1000 / (output_tokens - 1) if output_tokens != 1 else ttft * 1000
 
         # Convert start and stop times to datetime objects
-        start_time = datetime.fromtimestamp(start_time).strftime('%Y-%m-%d %H:%M:%S.%f')
-        end_time = datetime.fromtimestamp(end_time).strftime('%Y-%m-%d %H:%M:%S.%f')
+        start_time_str = datetime.fromtimestamp(start_time).strftime('%H:%M:%S.%f')
+        end_time_str = datetime.fromtimestamp(end_time).strftime('%H:%M:%S.%f')
 
         # Log the results to the output CSV file
+        self.request_count += 1
+        if self.request_count > self.max_requests:
+            self.environment.runner.quit()
+
+        self.log_results(start_time_str, end_time_str, input_tokens, output_tokens, latency, throughput, latency_per_token, ttft)
+        try:
+            barrier.wait()
+        except BrokenBarrierError:
+            pass
+
+    def log_results(self, start_time, end_time, input_tokens, output_tokens, latency, throughput, latency_per_token, ttft):
+        """
+        Log the results to the output CSV file.
+        """
         with open(self.output_file_path, 'a', newline='') as csvfile:
-            fieldnames = ['request', 'start_time', 'end_time', 'input_tokens',
-                          'output_tokens', 'latency(ms)', 'throughput(tokens/second)', 'latency_per_token(ms/tokens)',
-                          'TTFT(ms)']
+            fieldnames = [
+                'request', 'start_time', 'end_time', 'input_tokens',
+                'output_tokens', 'latency(ms)', 'throughput(tokens/second)',
+                'latency_per_token(ms/tokens)', 'TTFT(ms)'
+            ]
             writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
 
             if csvfile.tell() == 0:
                 writer.writeheader()
 
             writer.writerow({
-                'request': self.i,
+                'request': self.request_count,
                 'start_time': start_time,
                 'end_time': end_time,
                 'input_tokens': input_tokens,
                 'output_tokens': output_tokens,
-                'latency(ms)': f"{latency* 1000:.3f}",
+                'latency(ms)': f"{latency * 1000:.3f}",
                 'throughput(tokens/second)': f"{throughput:.3f}",
                 'latency_per_token(ms/tokens)': f"{latency_per_token:.3f}",
-                'TTFT(ms)': f"{ttft* 1000:.3f}"
+                'TTFT(ms)': f"{ttft * 1000:.3f}"
             })
 
     def on_stop(self):
-        # Calculate the total requests made by all users
-        total_requests_made = sum(user_data.get('requests_made', 0) for user_data in self.users_list)
+        """
+        Perform actions on stopping the test.
+        """
         self.environment.runner.quit()
-
-        # Determine if all users have finished their requests
-        if total_requests_made >= self.max_requests:
-            self.environment.runner.quit()
