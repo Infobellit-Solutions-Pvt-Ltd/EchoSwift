@@ -48,7 +48,7 @@ for u in "${USER_COUNTS[@]}"; do
         done
 
         # Calculate average after generating all CSV files for the current user and input token
-        python3 utils/avg_locust_results.py --input_csv_filename "$USER_FILE" --output_csv_filename "$USER_DIR/avg_${input_token}_input_tokens.csv" --tokens "${OUTPUT_TOKENS[@]}"
+        python3 Utils/avg_locust_results.py --input_csv_filename "$USER_FILE" --output_csv_filename "$USER_DIR/avg_${input_token}_input_tokens.csv" --tokens "${OUTPUT_TOKENS[@]}"
     done
 
 done
