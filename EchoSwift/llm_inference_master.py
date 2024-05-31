@@ -175,8 +175,8 @@ class APITestUser(HttpUser):
         except Exception as e:
             logging.error(f"Error making request: {e}")
             return
-        g
-        enerated_text, output_tokens, ttft = self.process_response(response)
+        
+        generated_text, output_tokens, ttft = self.process_response(response)
 
         logging.info(f"Generated Text: {generated_text}")
 
