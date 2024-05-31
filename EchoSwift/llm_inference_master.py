@@ -7,7 +7,6 @@ from datetime import datetime
 from locust import HttpUser, task
 from transformers import AutoTokenizer
 from threading import Barrier, BrokenBarrierError
-
 import json
 
 # Configure logging
@@ -37,7 +36,6 @@ class APITestUser(HttpUser):
         self.dataset_file = os.environ.get('INPUT_DATASET', '')
         self.questions = self.load_dataset(self.dataset_file)
         self.output_file_path = os.environ.get('OUTPUT_FILE', 'output.csv')
-        self.users_list = []
         self.provider = os.environ.get('PROVIDER', " ")
         self.model_name = os.environ.get('MODEL_NAME', " ")
 
@@ -51,7 +49,10 @@ class APITestUser(HttpUser):
             return [row['Input_Prompt'] for row in reader]
 
     def on_start(self):
-        self.users_list.append({'requests_made': 0, 'total_requests': 0})
+        try:
+            barrier.wait()
+        except BrokenBarrierError:
+            pass
 
     def format_prompt(self):
         """
@@ -99,7 +100,6 @@ class APITestUser(HttpUser):
         """
         generated_text = ""
         ttft = None
-        # start_time = time.perf_counter()
 
         for i, chunk in enumerate(response.iter_lines()):
             if chunk and i == 0 and ttft is None:
@@ -121,7 +121,6 @@ class APITestUser(HttpUser):
         """
         generated_text = ""
         ttft = None
-        # start_time = time.perf_counter()
 
         for i, chunk in enumerate(response.iter_lines()):
             if chunk and i == 0 and ttft is None:
@@ -163,6 +162,7 @@ class APITestUser(HttpUser):
         """
         if self.request_count > self.max_requests:
             self.environment.runner.quit()
+            return
 
         input_data, input_tokens = self.format_prompt()
 
@@ -230,4 +230,8 @@ class APITestUser(HttpUser):
         """
         Perform actions on stopping the test.
         """
+        try: 
+            barrier.wait()
+        except BrokenBarrierError:
+            pass
         self.environment.runner.quit()
