@@ -169,9 +169,14 @@ class APITestUser(HttpUser):
         # Record the start time of the API request
         global start_time
         start_time = time.perf_counter()
-        response = self.client.post(self.api_url, json=input_data, stream=True)
-
-        generated_text, output_tokens, ttft = self.process_response(response)
+        try:
+            response = self.client.post(self.api_url, json=input_data, stream=True)
+            response.raise_for_status()
+        except Exception as e:
+            logging.error(f"Error making request: {e}")
+            return
+        g
+        enerated_text, output_tokens, ttft = self.process_response(response)
 
         logging.info(f"Generated Text: {generated_text}")
 
