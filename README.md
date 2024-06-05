@@ -57,7 +57,7 @@ python3 dataset_filtering.py
 ```
 **Note:**
 If inference server is Ollama then you should pass the modelname, otherwise not required.
-**Example:** ./llm_inference_benchmark.sh "Test_dir" "http://localhost:8080/generate_stream" "TGI"
+* Example: ./llm_inference_benchmark.sh "test_dir" "http://localhost:8080/generate_stream" "TGI"
 
 ## Benchmark Result Analysis
 
