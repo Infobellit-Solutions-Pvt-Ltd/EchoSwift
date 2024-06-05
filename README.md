@@ -57,6 +57,7 @@ python3 dataset_filtering.py
 ```
 **Note:**
 If inference server is Ollama then you should pass the modelname, otherwise not required.
+**Example:** ./llm_inference_benchmark.sh "Test_dir" "http://localhost:8080/generate_stream" "TGI"
 
 ## Benchmark Result Analysis
 
@@ -66,6 +67,6 @@ If inference server is Ollama then you should pass the modelname, otherwise not 
 Utils/python3 llm_result_analysis.py
 ```
 
-* The above command starts up a streamlit application which displays the generated plots.
+* The above command starts up a streamlit application which displays the generated plots and also stores these plots under given Output directory.
 
 Refer [`LLM_Inference_Benchmark_pdf`](Inference-Benchmark-tool-public.pdf) for more detailed usage on how to get the dataset and run the benchmark.
