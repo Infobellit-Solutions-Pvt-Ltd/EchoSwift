@@ -108,10 +108,13 @@ class APITestUser(HttpUser):
 
             decoded_chunk = chunk.decode("utf-8")
             if "data:" in decoded_chunk:
-                json_data = decoded_chunk.split("data:")[1]
-                json_data = json.loads(json_data)
-                token = json_data["token"]["text"]
-                generated_text += token
+                try:
+                    json_data = decoded_chunk.split("data:")[1]
+                    json_data = json.loads(json_data)
+                    token = json_data["token"]["text"]
+                    generated_text += token
+                except (json.JSONDecoderError, KeyError):
+                    print("Failed to extract decoded text from JSON")
 
         return generated_text, ttft
 
@@ -129,9 +132,12 @@ class APITestUser(HttpUser):
 
             decoded_chunk = chunk.decode('utf-8')
             if decoded_chunk:
-                json_data = json.loads(decoded_chunk)
-                token = json_data["response"]
-                generated_text += token
+                try:
+                    json_data = json.loads(decoded_chunk)
+                    token = json_data["response"]
+                    generated_text += token
+                except (json.JSONDecoderError, KeyError):
+                    print("Failed to extract decoded text from JSON")
 
         return generated_text, ttft
 
@@ -148,10 +154,13 @@ class APITestUser(HttpUser):
 
             decoded_chunk = chunk.decode("utf-8")
             if "data:" in decoded_chunk:
-                json_data = decoded_chunk.split("data:")[1]
-                json_data = json.loads(json_data)
-                token = json_data["content"]
-                generated_text += token
+                try:
+                    json_data = decoded_chunk.split("data:")[1]
+                    json_data = json.loads(json_data)
+                    token = json_data["content"]
+                    generated_text += token
+                except (json.JSONDecoderError, KeyError):
+                    print("Failed to extract decoded text from JSON")
 
         return generated_text, ttft
 
