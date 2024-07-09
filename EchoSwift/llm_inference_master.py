@@ -195,8 +195,8 @@ class APITestUser(HttpUser):
         # End-to-end time for getting the response
         latency = (end_time - start_time)
 
-        throughput = (output_tokens - 1) / (latency - ttft) if output_tokens != 1 else float('inf')
-        latency_per_token = (latency - ttft) * 1000 / (output_tokens - 1) if output_tokens != 1 else ttft * 1000
+        throughput = (output_tokens - 1) / (latency - ttft) if output_tokens >= 1 else 0
+        latency_per_token = (latency - ttft) * 1000 / (output_tokens - 1) if output_tokens >= 1 else ttft * 1000
 
         # Convert start and stop times to datetime objects
         start_time_str = datetime.fromtimestamp(start_time).strftime('%H:%M:%S.%f')
