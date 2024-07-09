@@ -78,7 +78,7 @@ Please cite our paper if you find the resource useful:
 @inproceedings{Krishna2024,
   series = {ICPE ’24},
   title = {EchoSwift: An Inference Benchmarking and Configuration Discovery Tool for Large Language Models (LLMs)},
-  url = {http://dx.doi.org/10.1145/3629527.3652273},
+  url = {(https://dl.acm.org/doi/10.1145/3629527.3652273)},
   DOI = {10.1145/3629527.3652273},
   booktitle = {Companion of the 15th ACM/SPEC International Conference on Performance Engineering},
   publisher = {ACM},
