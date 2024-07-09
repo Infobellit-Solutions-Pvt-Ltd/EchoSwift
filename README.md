@@ -74,7 +74,7 @@ Refer [`LLM_Inference_Benchmark_pdf`](Inference-Benchmark-tool-public.pdf) for m
 ## Citation
 If you find our resource useful, please cite our paper:
 
-### EchoSwift: An Inference Benchmarking and Configuration Discovery Tool for Large Language Models (LLMs)
+### [EchoSwift: An Inference Benchmarking and Configuration Discovery Tool for Large Language Models (LLMs)](https://dl.acm.org/doi/10.1145/3629527.3652273)
 
 ```bibtex
 @inproceedings{Krishna2024,
