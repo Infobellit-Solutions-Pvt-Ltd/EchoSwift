@@ -72,10 +72,9 @@ Utils/python3 llm_result_analysis.py
 Refer [`LLM_Inference_Benchmark_pdf`](Inference-Benchmark-tool-public.pdf) for more detailed usage on how to get the dataset and run the benchmark.
 
 ## Citation
+If you find our resource useful, please cite our paper:
 
 # EchoSwift: An Inference Benchmarking and Configuration Discovery Tool for Large Language Models (LLMs)
-
-If you find our resource useful, please cite our paper:
 
 ```bibtex
 @inproceedings{Krishna2024,
