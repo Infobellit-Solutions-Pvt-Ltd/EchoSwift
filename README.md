@@ -70,6 +70,7 @@ Utils/python3 llm_result_analysis.py
 * The above command starts up a streamlit application which displays the generated plots and also stores these plots under given Output directory.
 
 Refer [`LLM_Inference_Benchmark_pdf`](Inference-Benchmark-tool-public.pdf) for more detailed usage on how to get the dataset and run the benchmark.
+Refer ['AMD User Guide'](https://www.amd.com/content/dam/amd/en/documents/epyc-technical-docs/user-guides/58669-amd-epyc-9004-ug-openshift.pdf) for detailed steps setting up inference endpoint for models to benchmark.
 
 ## Citation
 If you find our resource useful, please cite our paper:
