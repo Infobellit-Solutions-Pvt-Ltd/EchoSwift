@@ -15,6 +15,7 @@ class DataFiltering:
         "_512": (490, 530),
         "_1024": (1000, 1100),
         "_2048": (2000, 2100),
+        "_4096": (4050, 4150)
     }
 
     def __init__(self, dataset, tokenizer_path_or_repo_id, base_folder):
