@@ -13,7 +13,7 @@ export API_URL=$2
 export PROVIDER=$3
 
 # Set MODEL_NAME only if PROVIDER is Ollama
-if [ "$PROVIDER" == "Ollama" ]; then
+if [ "$PROVIDER" == "Ollama" ] || [ "$PROVIDER" == "vLLM" ]; then
     export MODEL_NAME=$4
 fi
 

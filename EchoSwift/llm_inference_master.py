@@ -72,6 +72,14 @@ class APITestUser(HttpUser):
         elif self.provider == "Llamacpp":
             data = {"prompt": prompt, "n_predict": self.max_new_tokens, "stream": True}
 
+        elif self.provider == "vLLM":
+            data = {
+                "model": self.model_name,
+                "prompt": prompt,
+                "max_tokens": self.max_new_tokens,
+                "stream": True
+            }
+
         input_tokens = len(tokenizer.encode(prompt))
         return data, input_tokens
 
@@ -84,7 +92,8 @@ class APITestUser(HttpUser):
         provider_handlers = {
             "TGI": self._process_tgi_response,
             "Ollama": self._process_ollama_response,
-            "Llamacpp": self._process_llamacpp_response
+            "Llamacpp": self._process_llamacpp_response,
+            "vLLM":self._process_vLLM_response
         }
 
         handler = provider_handlers.get(self.provider, None)
@@ -113,7 +122,7 @@ class APITestUser(HttpUser):
                     json_data = json.loads(json_data)
                     token = json_data["token"]["text"]
                     generated_text += token
-                except (json.JSONDecoderError, KeyError):
+                except (json.JSONDecodeError, KeyError):
                     print("Failed to extract decoded text from JSON")
 
         return generated_text, ttft
@@ -136,7 +145,7 @@ class APITestUser(HttpUser):
                     json_data = json.loads(decoded_chunk)
                     token = json_data["response"]
                     generated_text += token
-                except (json.JSONDecoderError, KeyError):
+                except (json.JSONDecodeError, KeyError):
                     print("Failed to extract decoded text from JSON")
 
         return generated_text, ttft
@@ -159,9 +168,35 @@ class APITestUser(HttpUser):
                     json_data = json.loads(json_data)
                     token = json_data["content"]
                     generated_text += token
-                except (json.JSONDecoderError, KeyError):
+                except (json.JSONDecodeError, KeyError):
                     print("Failed to extract decoded text from JSON")
 
+        return generated_text, ttft
+
+    def _process_vLLM_response(self, response):
+        """
+        Process the response for vLLM provider
+        """
+        generated_text = ""
+        ttft = None
+        for i, chunk in enumerate(response.iter_lines()):
+            if chunk and i==0 and ttft is None:
+                ttft = (time.perf_counter() - start_time)
+                logging.info(f"TTFT: {ttft*1000:.3f} ms")
+            
+            decoded_chunk = chunk.decode("utf-8")
+            if decoded_chunk == "data: [DONE]":
+                    break
+            if "data:" in decoded_chunk:
+                try:
+                    json_data = decoded_chunk.split("data:")[1]
+                    json_data = json.loads(json_data)
+                    token = json_data["choices"][0]["text"]
+                    generated_text += token
+                    #print(token,end="",flush=True)
+                except (json.JSONDecodeError, KeyError) as e:
+                    print("Failed to extract decoded text from JSON")
+                    
         return generated_text, ttft
 
     @task
@@ -195,8 +230,8 @@ class APITestUser(HttpUser):
         # End-to-end time for getting the response
         latency = (end_time - start_time)
 
-        throughput = (output_tokens - 1) / (latency - ttft) if output_tokens >= 1 else 0
-        latency_per_token = (latency - ttft) * 1000 / (output_tokens - 1) if output_tokens >= 1 else ttft * 1000
+        throughput = (output_tokens - 1) / (latency - ttft) if output_tokens > 1 else 0
+        latency_per_token = (latency - ttft) * 1000 / (output_tokens - 1) if output_tokens > 1 else ttft * 1000
 
         # Convert start and stop times to datetime objects
         start_time_str = datetime.fromtimestamp(start_time).strftime('%H:%M:%S.%f')
