@@ -77,6 +77,7 @@ class APITestUser(HttpUser):
                 "model": self.model_name,
                 "prompt": prompt,
                 "max_tokens": self.max_new_tokens,
+                "min_tokens": self.max_new_tokens,
                 "stream": True
             }
 
