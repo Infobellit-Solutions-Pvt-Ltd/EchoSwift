@@ -65,7 +65,7 @@ Create or modify the `config.yaml` file in the project root directory. Here's an
 out_dir: "results"
 base_url: "http://localhost:11434/api/generate"
 provider: "Ollama"
-model: "llama2"
+model: "llama2" # Model is required for Ollama and vLLM
 max_requests: 5
 user_counts: [1, 3, 10]
 input_tokens: [32]
