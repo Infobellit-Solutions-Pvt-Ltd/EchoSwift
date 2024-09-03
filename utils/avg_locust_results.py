@@ -56,4 +56,4 @@ if __name__ == '__main__':
 
 
 ''' example command to run this file
-python3 avg_locust_results.py --input_csv_filename "Llama-2-7b-chat-hf/SUT_32m/postloading/Locust_Test_Results/1_User/32_input_tokens.csv" --output_csv_filename "Llama-2-7b-chat-hf/SUT_32m/postloading/Locust_Test_Results/1_User/avg_32_input_tokens.csv" --tokens 64 128 256 '''
+python3 avg_locust_results.py --input_csv_filename "Results_vLLM_Llama3_8b_32in_256out/100_User/32_input_tokens.csv" --output_csv_filename "Results_vLLM_Llama3_8b_32in_256out/100_User/avg_32_input_tokens.csv" --tokens 256 '''

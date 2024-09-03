@@ -4,7 +4,8 @@ import logging
 from pathlib import Path
 from typing import List
 from tqdm import tqdm
-
+import time
+import signal
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
@@ -70,7 +71,7 @@ class EchoSwift:
         
         total_requests = users * self.max_requests
         with tqdm(total=total_requests, desc=f"Requests (u={users}, in={input_tokens}, out={output_tokens})", leave=True) as pbar, \
-            open(log_file_path, 'w') as log_file:
+             open(log_file_path, 'w') as log_file:
             process = subprocess.Popen(command, env=env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, universal_newlines=True, bufsize=1)
             
             generated_text_count = 0
@@ -83,20 +84,23 @@ class EchoSwift:
                     if generated_text_count % users == 0:
                         update_amount = users
                         pbar.update(update_amount)
-                
-                # Check if we've reached the total number of requests
+
                 if pbar.n >= total_requests:
+                    process.terminate()
                     break
 
-            # Update any remaining progress
             remaining = generated_text_count - pbar.n
             if remaining > 0:
                 pbar.update(remaining)
 
-            process.wait()
+            try:
+                process.wait(timeout=30)
+            except subprocess.TimeoutExpired:
+                logging.warning("Locust didn't terminate gracefully. Forcing termination.")
+                process.kill()
 
-        if process.returncode != 0:
-            logging.error(f"Locust command failed. Check the log file: {log_file_path}")
+        if process.returncode != 0 and process.returncode != -signal.SIGTERM.value:
+            logging.error(f"Locust command failed with return code {process.returncode}. Check the log file: {log_file_path}")
 
     def _calculate_average(self, user_dir: Path, input_token: int):
         input_file = user_dir / f"{input_token}_input_tokens.csv"
