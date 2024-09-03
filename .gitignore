@@ -81,3 +81,9 @@ Filtered_ShareGPT_Dataset/
 
 # Documentation builds
 docs/_build/
+
+# Datasets
+Input_*
+
+# Results
+Results_*

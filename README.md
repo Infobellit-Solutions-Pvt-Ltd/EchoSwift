@@ -2,7 +2,7 @@
 
 EchoSwift is a powerful and flexible tool designed for benchmarking Large Language Model (LLM) inference. It allows users to measure and analyze the performance of LLM endpoints across various metrics, including latency, throughput, and time to first token (TTFT).
 
-![EchoSwift Logo](images/Echoswift.png)
+![EchoSwift](images/Echoswift.png)
 
 ## Features
 
@@ -20,7 +20,7 @@ The performance metrics captured for varying input and output tokens and paralle
 - TTFT(ms)
 - Throughput(tokens/sec) 
 
-![Img](images/metric.png)
+![metrics](images/metric.png)
 
 ## Installation
 
@@ -34,7 +34,7 @@ Alternatively, you can install from source:
 
 ```bash
 git clone https://github.com/Infobellit-Solutions-Pvt-Ltd/EchoSwift.git
-cd echoswift
+cd EchoSwift
 pip install -e .
 ```
 
@@ -52,7 +52,7 @@ EchoSwift provides a simple CLI interface for running benchmarks. Here are the m
 Before running a benchmark, you need to download and filter the dataset:
 
 ```bash
-echoswift download-dataset
+echoswift dataprep
 ```
 
 This command will download the ShareGPT dataset and filter it based on various input token lengths.
@@ -108,9 +108,9 @@ For more advanced usage and customization options, please refer to the [document
 
 We welcome contributions to EchoSwift! Please see our [Contributing Guide](CONTRIBUTING.md) for more details. -->
 
-## License
+<!-- ## License
 
-EchoSwift is released under the [MIT License](LICENSE).
+EchoSwift is released under the [MIT License](LICENSE). -->
 
 ## Citation
 
