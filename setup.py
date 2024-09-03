@@ -12,7 +12,7 @@ setup(
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/Infobellit-Solutions-Pvt-Ltd/EchoSwift",
-    packages=find_packages(include=['echoswift', 'echoswift.*', 'utils']),
+    packages=find_packages(include=['echoswift', 'echoswift.*']),
     include_package_data=True,
     install_requires=[
         "click",

@@ -27,6 +27,9 @@ jobs:
     - name: Install package
       run: |
         pip install -e .
+    - name: Verify package structure
+      run: |
+        python -c "import echoswift; import echoswift.utils; print('Package structure verified')"
     - name: List directory contents
       run: |
         pwd
