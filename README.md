@@ -1,86 +1,126 @@
-## EchoSwift: Benchmarking LLM Inference by Infobellit
+# EchoSwift: LLM Inference Benchmarking Tool
 
-## EchoSwift
+EchoSwift is a powerful and flexible tool designed for benchmarking Large Language Model (LLM) inference. It allows users to measure and analyze the performance of LLM endpoints across various metrics, including latency, throughput, and time to first token (TTFT).
 
- The objective of the LLM Inference Bench Tool is to identify the Latency of each request made and measured in millisecond/token,Time To First Token (TTFT) and the Throughput measured in number of tokens/second. The above metrics is measured with varying Input Tokens (Query Length), Output Tokens (Response Length) and Simulating Parallel Users.
+![EchoSwift Logo](images/Echoswift.png)
 
-## Summarizing the main aspects focused on:
+## Features
 
+- Benchmark LLM inference across multiple providers (e.g., Ollama, vLLM, TGI)
+- Measure key performance metrics: latency, throughput, and TTFT
+- Support for varying input and output token lengths
+- Simulate concurrent users to test scalability
+- Easy-to-use CLI interface
+- Detailed logging and progress tracking
 
-![Img](EchoSwift/images/Echoswift.png)
-The Benchmark tool mainly focusses on data collection ,analyzing the CPU and Memory requirements and load testing with varying number of Users.
 ## Performance metrics:
 
-![Img](EchoSwift/images/metric.png)
+The performance metrics captured for varying input and output tokens and parallel users while running the benchmark includes 
+- Latency (ms/token)
+- TTFT(ms)
+- Throughput(tokens/sec) 
 
-The performance metrics captured while running the benchmark includes Latency,TTFT and Throughput for varying input and output tokens and parallel users. 
-# Follow the below steps to reproduce similar results
+![Img](images/metric.png)
 
-## Setup the Environment
+## Installation
 
-### Create a Virtual Environment
-```bash
-python3 -m venv myenv
-source myenv/bin/activate
-```
-
-### Install the Dependencies
-* The Inference Benchmark load test relies on [Locust package](https://locust.io/). Install it using pip.
+You can install EchoSwift using pip:
 
 ```bash
-pip install -r requirements.txt
+pip install echoswift
 ```
 
-## Dataset Filtering
-
-Here the dataset used is [ShareGPT](https://huggingface.co/datasets/pvduy/sharegpt_alpaca_oa_vicuna_format/viewer/default/train?p=1) Dataset from Hugging Face datasets.
-
-* ShareGPT dataset has been filtered based on varying input token length.
-* Different Input Token Lengths considered are 32,64,128,256,512,1k,2k.
-* 1000 prompts are filtered out for each token length specified above.
+Alternatively, you can install from source:
 
 ```bash
-python3 dataset_filtering.py
+git clone https://github.com/Infobellit-Solutions-Pvt-Ltd/EchoSwift.git
+cd echoswift
+pip install -e .
 ```
 
-## Run the Load Test using Locust
+## Requirements
 
-* Define the configurations required to run different tests in the [llm_inference_benchmark.sh](EchoSwift/llm_inference_benchmark.sh) shell script.
-* List of parallel users "(1 3 10 30)".
-* Varying Input tokens "(32 64 128 256 512)" and Output tokens "(32 64 128 256 512)".
+- Python 3.10+
+- Dependencies listed in `requirements.txt`
 
-* Add the required arguments to execute the below command (output_dir to save the results and the generation_endpoint to run the benchmark).
-* The generation_endpoint here can be any inference server endpoint,For example TGI Endpoint hosting a model (http://localhost:8080/generate_stream).
+## Usage
+
+EchoSwift provides a simple CLI interface for running benchmarks. Here are the main commands:
+
+### 1. Download and Filter Dataset
+
+Before running a benchmark, you need to download and filter the dataset:
 
 ```bash
-./llm_inference_benchmark.sh <output_dir> <generation_endpoint> <inference_server> <model_name>
+echoswift download-dataset
 ```
-**Note:**
-If inference server is Ollama or vllm then you should pass the modelname, otherwise not required.
-* Example: ./llm_inference_benchmark.sh "test_dir" "http://localhost:8080/generate_stream" "TGI"
 
-## Benchmark Result Analysis
+This command will download the ShareGPT dataset and filter it based on various input token lengths.
 
-* All the CSV's received are further processed by running llm_result_analysis.py and the throughput, latency, ttft can be analyzed with the help of plots generated.
+### 2. Configure the Benchmark
+
+Create or modify the `config.yaml` file in the project root directory. Here's an example configuration:
+
+```yaml
+out_dir: "results"
+base_url: "http://localhost:11434/api/generate"
+provider: "Ollama"
+model: "llama2"
+max_requests: 5
+user_counts: [1, 3, 10]
+input_tokens: [32]
+output_tokens: [256]
+```
+
+Adjust these parameters according to your needs and the LLM endpoint you're benchmarking.
+
+### 3. Run the Benchmark
+
+To start the benchmark using the configuration from `config.yaml`:
 
 ```bash
-Utils/python3 llm_result_analysis.py
+echoswift start
 ```
 
-* The above command starts up a streamlit application which displays the generated plots and also stores these plots under given Output directory.
+If you want to use a different configuration file:
 
-Refer [`LLM_Inference_Benchmark_pdf`](Inference-Benchmark-tool-public.pdf) for more detailed usage on how to get the dataset and run the benchmark.
+```bash
+echoswift start --config path/to/your/config.yaml
+```
 
-Refer [`AMD_User_Guide`](https://www.amd.com/content/dam/amd/en/documents/epyc-technical-docs/user-guides/58669-amd-epyc-9004-ug-openshift.pdf) for detailed steps on setting up inference endpoint for LLM models to benchmark.
+## Output
+
+EchoSwift will create a `results` directory (or the directory specified in `out_dir`) containing:
+
+- CSV files with raw benchmark data
+- Averaged results for each combination of users, input tokens, and output tokens
+- Log files for each Locust run
+
+## Analyzing Results
+
+After the benchmark completes, you can find detailed CSV files in the output directory. These files contain information about latency, throughput, and TTFT for each test configuration.
+
+<!-- ## Advanced Usage
+
+For more advanced usage and customization options, please refer to the [documentation](link-to-your-documentation). -->
+
+<!-- ## Contributing
+
+We welcome contributions to EchoSwift! Please see our [Contributing Guide](CONTRIBUTING.md) for more details. -->
+
+## License
+
+EchoSwift is released under the [MIT License](LICENSE).
 
 ## Citation
+
 If you find our resource useful, please cite our paper:
 
 ### [EchoSwift: An Inference Benchmarking and Configuration Discovery Tool for Large Language Models (LLMs)](https://dl.acm.org/doi/10.1145/3629527.3652273)
 
 ```bibtex
 @inproceedings{Krishna2024,
-  series = {ICPE ’24},
+  series = {ICPE '24},
   title = {EchoSwift: An Inference Benchmarking and Configuration Discovery Tool for Large Language Models (LLMs)},
   url = {https://dl.acm.org/doi/10.1145/3629527.3652273},
   DOI = {10.1145/3629527.3652273},
@@ -89,6 +129,10 @@ If you find our resource useful, please cite our paper:
   author = {Krishna, Karthik and Bandili, Ramana},
   year = {2024},
   month = May,
-  collection = {ICPE ’24}
+  collection = {ICPE '24}
 }
+```
 
+## Support
+
+If you encounter any issues or have questions, please [open an issue](https://github.com/yourusername/echoswift/issues) on our GitHub repository.
