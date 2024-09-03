@@ -1,10 +1,10 @@
 import click
-from pathlib import Path
-from echoswift.llm_inference_benchmark import EchoSwift
-from echoswift.dataset import download_dataset_files
-from utils.plot_results import plot_benchmark_results
-import logging
 import yaml
+from pathlib import Path
+from .llm_inference_benchmark import EchoSwift
+from .dataset import download_dataset_files
+from ..utils.plot_results import plot_benchmark_results 
+import logging
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
