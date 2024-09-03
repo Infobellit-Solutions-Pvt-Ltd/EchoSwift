@@ -26,6 +26,9 @@ class EchoSwift:
 
     def run_benchmark(self):
         self.output_dir.mkdir(parents=True, exist_ok=True)
+        locust_logs_dir = self.output_dir / "locust_logs"
+        locust_logs_dir.mkdir(exist_ok=True)
+        
         total_requests = sum(self.user_counts) * self.max_requests * len(self.input_tokens) * len(self.output_tokens)
         logging.info(f"Total requests to be sent: {total_requests}")
 
@@ -39,11 +42,11 @@ class EchoSwift:
 
                 for output_token in self.output_tokens:
                     logging.info(f"Running Locust with users={u}, input_tokens={input_token}, and output_tokens={output_token}")
-                    self._run_locust(u, input_token, output_token, user_file)
+                    self._run_locust(u, input_token, output_token, user_file, locust_logs_dir)
 
                 self._calculate_average(user_dir, input_token)
 
-    def _run_locust(self, users: int, input_tokens: int, output_tokens: int, output_file: Path):
+    def _run_locust(self, users: int, input_tokens: int, output_tokens: int, output_file: Path, logs_dir: Path):
         env = os.environ.copy()
         env.update({
             "MAX_REQUESTS": str(self.max_requests),
@@ -67,7 +70,7 @@ class EchoSwift:
             "-r", str(users)
         ]
 
-        log_file_path = self.output_dir / f"locust_log_u{users}_in{input_tokens}_out{output_tokens}.log"
+        log_file_path = logs_dir / f"locust_log_u{users}_in{input_tokens}_out{output_tokens}.log"
         
         total_requests = users * self.max_requests
         with tqdm(total=total_requests, desc=f"Requests (u={users}, in={input_tokens}, out={output_tokens})", leave=True) as pbar, \
