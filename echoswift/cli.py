@@ -21,15 +21,50 @@ def cli():
 
     \b
     Usage:
-    1. Create a config.yaml file (see README for configuration details)
-    2. Run 'echoswift dataprep' to download the dataset
-    3. Run 'echoswift start --config config.yaml' to start the benchmark
-    4. Run 'echoswift plot --results-dir benchmark_results' to generate plots
+    1. Run 'echoswift dataprep' to download the dataset and create a default config.yaml
+    2. Run 'echoswift start --config config.yaml' to start the benchmark
+    3. Run 'echoswift plot --results-dir benchmark_results' to generate plots
 
     For more detailed information, visit:
     https://github.com/Infobellit-Solutions-Pvt-Ltd/EchoSwift/blob/main/README.md
     """
     pass
+
+def create_default_config(output='config.yaml'):
+    default_config = {
+        "out_dir": "benchmark_results",
+        "base_url": "http://localhost:8000/v1/completions",
+        "provider": "vLLM",
+        "model": "meta-llama/Meta-Llama-3-8B",
+        "max_requests": 5,
+        "user_counts": [1, 3],
+        "input_tokens": [32, 64],
+        "output_tokens": [128, 256]
+    }
+
+    output_path = Path(output)
+    if output_path.exists():
+        click.confirm(f"The file {output} already exists. Do you want to overwrite it?", abort=True)
+
+    with open(output_path, 'w') as f:
+        yaml.dump(default_config, f, default_flow_style=False)
+
+    click.echo(f"Default configuration file created: {output_path}")
+    click.echo("You can modify this file according to your needs before running the benchmark.")
+
+@cli.command()
+@click.option('--config', default='config.yaml', help='Name of the output configuration file')
+def dataprep(config):
+    """Download the filtered ShareGPT dataset and create a default config file"""
+    # Download dataset
+    click.echo("Downloading the filtered ShareGPT dataset...")
+    download_dataset_files("sarthakdwi/EchoSwift-8k")
+    
+    # Create default config
+    click.echo("Creating default configuration file...")
+    create_default_config(config)
+    
+    click.echo("Data preparation completed. You're now ready to run the benchmark.")
 
 @cli.command()
 @click.option('--config', required=True, type=click.Path(exists=True), help='Path to the configuration file')
@@ -66,11 +101,6 @@ def start(config):
         logging.error(error_msg)
         click.echo(error_msg, err=True)
         raise click.Abort()
-
-@cli.command()
-def dataprep():
-    """Download the filtered ShareGPT dataset"""
-    download_dataset_files("sarthakdwi/EchoSwift-8k")
 
 @cli.command()
 @click.option('--results-dir', required=True, type=click.Path(exists=True), help='Directory containing benchmark results')
