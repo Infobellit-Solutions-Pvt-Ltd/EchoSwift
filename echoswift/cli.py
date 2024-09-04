@@ -15,10 +15,7 @@ def load_config(config_file):
         return yaml.safe_load(f)
 
 @click.group(context_settings=CONTEXT_SETTINGS)
-@click.option('--config', type=click.Path(exists=True), help='Path to the configuration file (required for start command)')
-@click.option('--results-dir', type=click.Path(exists=True), help='Directory containing benchmark results (required for plot command)')
-@click.pass_context
-def cli(ctx, config, results_dir):
+def cli():
     """
     EchoSwift: LLM Inference Benchmarking Tool
 
@@ -32,18 +29,13 @@ def cli(ctx, config, results_dir):
     For more detailed information, visit:
     https://github.com/Infobellit-Solutions-Pvt-Ltd/EchoSwift/blob/main/README.md
     """
-    ctx.ensure_object(dict)
-    ctx.obj['config'] = config
-    ctx.obj['results_dir'] = results_dir
+    pass
 
 @cli.command()
-@click.pass_context
-def start(ctx):
+@click.option('--config', required=True, type=click.Path(exists=True), help='Path to the configuration file')
+def start(config):
     """Start the EchoSwift benchmark using the specified config file"""
-    if not ctx.obj['config']:
-        raise click.UsageError("The --config option is required for the start command.")
-    
-    config_path = Path(ctx.obj['config'])
+    config_path = Path(config)
     cfg = load_config(config_path)
     
     dataset_dir = Path("Input_Dataset")
@@ -73,15 +65,12 @@ def dataprep():
     download_dataset_files("sarthakdwi/EchoSwift-8k")
 
 @cli.command()
-@click.pass_context
-def plot(ctx):
+@click.option('--results-dir', required=True, type=click.Path(exists=True), help='Directory containing benchmark results')
+def plot(results_dir):
     """Plot graphs using benchmark results"""
-    if not ctx.obj['results_dir']:
-        raise click.UsageError("The --results-dir option is required for the plot command.")
-    
-    results_path = Path(ctx.obj['results_dir'])
-    if not results_path.exists() or not results_path.is_dir():
-        raise click.BadParameter("The specified results directory does not exist or is not a directory.")
+    results_path = Path(results_dir)
+    if not results_path.is_dir():
+        raise click.BadParameter("The specified results directory is not a directory.")
     
     try:
         plot_benchmark_results(results_path)

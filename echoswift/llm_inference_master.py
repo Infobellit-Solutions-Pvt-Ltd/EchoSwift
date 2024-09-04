@@ -1,131 +1,287 @@
 import os
-import subprocess
-import logging
-from pathlib import Path
-from typing import List
-from tqdm import tqdm
+import csv
 import time
-import signal
+import random
+import logging
+from datetime import datetime
+from locust import HttpUser, task
+from transformers import AutoTokenizer
+from threading import Barrier, BrokenBarrierError
+import json
 
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+# Configure logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s %(levelname)s %(message)s')
 
-class EchoSwift:
-    def __init__(self, output_dir: str, api_url: str, provider: str, model_name: str = None,
-                 max_requests: int = 5, user_counts: List[int] = [1],
-                 input_tokens: List[int] = [32], output_tokens: List[int] = [256],
-                 dataset_dir: str = "Input_Dataset"):
-        self.output_dir = Path(output_dir)
-        self.api_url = api_url
-        self.provider = provider
-        self.model_name = model_name
-        self.max_requests = max_requests
-        self.user_counts = user_counts
-        self.input_tokens = input_tokens
-        self.output_tokens = output_tokens
-        self.dataset_dir = Path(dataset_dir)
+# Initialize the tokenizer for encoding/decoding text
+tokenizer = AutoTokenizer.from_pretrained("hf-internal-testing/llama-tokenizer")
 
-    def run_benchmark(self):
-        self.output_dir.mkdir(parents=True, exist_ok=True)
-        locust_logs_dir = self.output_dir / "locust_logs"
-        locust_logs_dir.mkdir(exist_ok=True)
-        
-        total_requests = sum(self.user_counts) * self.max_requests * len(self.input_tokens) * len(self.output_tokens)
-        logging.info(f"Total requests to be sent: {total_requests}")
+# Global barrier to synchronize users
+num_users = int(os.environ.get("NUM_USERS", 10))
+barrier = Barrier(num_users)
 
-        for u in self.user_counts:
-            user_dir = self.output_dir / f"{u}_User"
-            user_dir.mkdir(exist_ok=True)
+class APITestUser(HttpUser):
+    """
+    Represents a Locust user for load testing an API.
+    """
 
-            for input_token in self.input_tokens:
-                user_file = user_dir / f"{input_token}_input_tokens.csv"
-                user_file.touch()
+    def __init__(self, *args, **kwargs):
+        """
+        Initialize the APITestUser instance.
+        """
+        super().__init__(*args, **kwargs)
+        self.request_count = 0
+        self.max_requests = int(os.environ.get("MAX_REQUESTS", 10))
+        self.max_new_tokens = int(os.environ.get('MAX_NEW_TOKENS', 128))
+        self.api_url = os.environ.get('API_URL', '')
+        self.dataset_file = os.environ.get('INPUT_DATASET', '')
+        self.questions = self.load_dataset(self.dataset_file)
+        self.output_file_path = os.environ.get('OUTPUT_FILE', 'output.csv')
+        self.provider = os.environ.get('PROVIDER', " ")
+        self.model_name = os.environ.get('MODEL_NAME', " ")
 
-                for output_token in self.output_tokens:
-                    logging.info(f"Running Locust with users={u}, input_tokens={input_token}, and output_tokens={output_token}")
-                    self._run_locust(u, input_token, output_token, user_file, locust_logs_dir)
+    @staticmethod
+    def load_dataset(csv_file):
+        """
+        Read questions from a CSV file.
+        """
+        with open(csv_file, 'r') as file:
+            reader = csv.DictReader(file)
+            return [row['Input_Prompt'] for row in reader]
 
-                self._calculate_average(user_dir, input_token)
+    def on_start(self):
+        try:
+            barrier.wait()
+        except BrokenBarrierError:
+            pass
 
-    def _run_locust(self, users: int, input_tokens: int, output_tokens: int, output_file: Path, logs_dir: Path):
-        env = os.environ.copy()
-        env.update({
-            "MAX_REQUESTS": str(self.max_requests),
-            "NUM_USERS": str(users),
-            "MAX_NEW_TOKENS": str(output_tokens),
-            "API_URL": self.api_url,
-            "PROVIDER": self.provider,
-            "INPUT_DATASET": str(self.dataset_dir / f"Dataset_{input_tokens}.csv"),
-            "OUTPUT_FILE": str(output_file)
-        })
+    def format_prompt(self):
+        """
+        Format the prompt for the API request.
+        """
+        prompt = random.choice(self.questions)
 
-        if self.provider in ["Ollama", "vLLM"]:
-            env["MODEL_NAME"] = self.model_name
+        if self.provider == "TGI":
+            data = {'inputs': prompt, 'parameters': {'max_new_tokens': self.max_new_tokens}}
+        elif self.provider == "Ollama":
+            data = {
+                "model": self.model_name, 
+                "prompt": prompt, 
+                "stream": True, 
+                "options": {"num_predict": self.max_new_tokens}
+            }
+        elif self.provider == "Llamacpp":
+            data = {"prompt": prompt, "n_predict": self.max_new_tokens, "stream": True}
 
-        command = [
-            "locust",
-            "-f", "echoswift/llm_inference_master.py",
-            "--headless",
-            "-H", self.api_url,
-            "-u", str(users),
-            "-r", str(users)
-        ]
+        elif self.provider == "vLLM":
+            data = {
+                "model": self.model_name,
+                "prompt": prompt,
+                "max_tokens": self.max_new_tokens,
+                "min_tokens": self.max_new_tokens,
+                "stream": True
+            }
 
-        log_file_path = logs_dir / f"locust_log_u{users}_in{input_tokens}_out{output_tokens}.log"
-        
-        total_requests = users * self.max_requests
-        with tqdm(total=total_requests, desc=f"Requests (u={users}, in={input_tokens}, out={output_tokens})", leave=True) as pbar, \
-             open(log_file_path, 'w') as log_file:
-            process = subprocess.Popen(command, env=env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, universal_newlines=True, bufsize=1)
+        input_tokens = len(tokenizer.encode(prompt))
+        return data, input_tokens
+
+    def process_response(self, response):
+        """
+        Process the response from the API.
+        """
+        generated_text = ""
+        ttft = None
+        provider_handlers = {
+            "TGI": self._process_tgi_response,
+            "Ollama": self._process_ollama_response,
+            "Llamacpp": self._process_llamacpp_response,
+            "vLLM":self._process_vLLM_response
+        }
+
+        handler = provider_handlers.get(self.provider, None)
+        if handler:
+            generated_text, ttft = handler(response)
+
+        output_tokens = len(tokenizer.encode(generated_text))
+        return generated_text, output_tokens, ttft
+
+    def _process_tgi_response(self, response):
+        """
+        Process the response for TGI provider.
+        """
+        generated_text = ""
+        ttft = None
+
+        for i, chunk in enumerate(response.iter_lines()):
+            if chunk and i == 0 and ttft is None:
+                ttft = (time.perf_counter() - start_time)
+                logging.info(f"TTFT: {ttft*1000:.3f} ms")
+
+            decoded_chunk = chunk.decode("utf-8")
+            if "data:" in decoded_chunk:
+                try:
+                    json_data = decoded_chunk.split("data:")[1]
+                    json_data = json.loads(json_data)
+                    token = json_data["token"]["text"]
+                    generated_text += token
+                except (json.JSONDecodeError, KeyError):
+                    print("Failed to extract decoded text from JSON")
+
+        return generated_text, ttft
+
+    def _process_ollama_response(self, response):
+        """
+        Process the response for Ollama provider.
+        """
+        generated_text = ""
+        ttft = None
+
+        for i, chunk in enumerate(response.iter_lines()):
+            if chunk and i == 0 and ttft is None:
+                ttft = (time.perf_counter() - start_time)
+                logging.info(f"TTFT: {ttft*1000:.3f} ms")
+
+            decoded_chunk = chunk.decode('utf-8')
+            if decoded_chunk:
+                try:
+                    json_data = json.loads(decoded_chunk)
+                    token = json_data["response"]
+                    generated_text += token
+                except (json.JSONDecodeError, KeyError):
+                    print("Failed to extract decoded text from JSON")
+
+        return generated_text, ttft
+
+    def _process_llamacpp_response(self, response):
+        """
+        Process the response for Llamacpp provider.
+        """
+        generated_text = ""
+        ttft = None
+        for i, chunk in enumerate(response.iter_lines()):
+            if chunk and i == 0 and ttft is None:
+                ttft = (time.perf_counter() - start_time)
+                logging.info(f"TTFT: {ttft*1000:.3f} ms")
+
+            decoded_chunk = chunk.decode("utf-8")
+            if "data:" in decoded_chunk:
+                try:
+                    json_data = decoded_chunk.split("data:")[1]
+                    json_data = json.loads(json_data)
+                    token = json_data["content"]
+                    generated_text += token
+                except (json.JSONDecodeError, KeyError):
+                    print("Failed to extract decoded text from JSON")
+
+        return generated_text, ttft
+
+    def _process_vLLM_response(self, response):
+        """
+        Process the response for vLLM provider
+        """
+        generated_text = ""
+        ttft = None
+        for i, chunk in enumerate(response.iter_lines()):
+            if chunk and i==0 and ttft is None:
+                ttft = (time.perf_counter() - start_time)
+                logging.info(f"TTFT: {ttft*1000:.3f} ms")
             
-            generated_text_count = 0
-            for line in iter(process.stdout.readline, ''):
-                log_file.write(line)
-                log_file.flush()
-                
-                if "Generated Text:" in line:
-                    generated_text_count += 1
-                    if generated_text_count % users == 0:
-                        update_amount = users
-                        pbar.update(update_amount)
-
-                if pbar.n >= total_requests:
-                    process.terminate()
+            decoded_chunk = chunk.decode("utf-8")
+            if decoded_chunk == "data: [DONE]":
                     break
+            if "data:" in decoded_chunk:
+                try:
+                    json_data = decoded_chunk.split("data:")[1]
+                    json_data = json.loads(json_data)
+                    token = json_data["choices"][0]["text"]
+                    generated_text += token
+                    #print(token,end="",flush=True)
+                except (json.JSONDecodeError, KeyError) as e:
+                    print("Failed to extract decoded text from JSON")
+                    
+        return generated_text, ttft
 
-            remaining = generated_text_count - pbar.n
-            if remaining > 0:
-                pbar.update(remaining)
+    @task
+    def generate_text(self):
+        """
+        Task to generate text using the API and log the results.
+        """
+        if self.request_count > self.max_requests:
+            self.environment.runner.quit()
+            return
 
-            try:
-                process.wait(timeout=30)
-            except subprocess.TimeoutExpired:
-                logging.warning("Locust didn't terminate gracefully. Forcing termination.")
-                process.kill()
+        input_data, input_tokens = self.format_prompt()
 
-        if process.returncode != 0 and process.returncode != -signal.SIGTERM.value:
-            logging.error(f"Locust command failed with return code {process.returncode}. Check the log file: {log_file_path}")
-
-    def _calculate_average(self, user_dir: Path, input_token: int):
-        input_file = user_dir / f"{input_token}_input_tokens.csv"
-        output_file = user_dir / f"avg_{input_token}_input_tokens.csv"
+        # Record the start time of the API request
+        global start_time
+        start_time = time.perf_counter()
+        try:
+            response = self.client.post(self.api_url, json=input_data, stream=True)
+            response.raise_for_status()
+        except Exception as e:
+            logging.error(f"Error making request: {e}")
+            return
         
-        command = [
-            "python3",
-            "utils/avg_locust_results.py",
-            "--input_csv_filename", str(input_file),
-            "--output_csv_filename", str(output_file),
-            "--tokens"
-        ] + [str(t) for t in self.output_tokens]
+        generated_text, output_tokens, ttft = self.process_response(response)
 
-        subprocess.run(command, check=True)
+        logging.info(f"Generated Text: {generated_text}")
 
-def run_echoswift(output_dir: str, api_url: str, provider: str, model_name: str = None,
-                  max_requests: int = 5, user_counts: List[int] = [1],
-                  input_tokens: List[int] = [32], output_tokens: List[int] = [256]):
-    benchmark = EchoSwift(output_dir, api_url, provider, model_name,
-                          max_requests, user_counts, input_tokens, output_tokens)
-    benchmark.run_benchmark()
+        # Record the end time of the API request
+        end_time = time.perf_counter()
 
-if __name__ == "__main__":
-    # This part will be replaced by CLI commands
-    run_echoswift("test_output", "http://localhost:8080/generate_stream", "TGI")
+        # End-to-end time for getting the response
+        latency = (end_time - start_time)
+
+        throughput = (output_tokens - 1) / (latency - ttft) if output_tokens > 1 else 0
+        latency_per_token = (latency - ttft) * 1000 / (output_tokens - 1) if output_tokens > 1 else ttft * 1000
+
+        # Convert start and stop times to datetime objects
+        start_time_str = datetime.fromtimestamp(start_time).strftime('%H:%M:%S.%f')
+        end_time_str = datetime.fromtimestamp(end_time).strftime('%H:%M:%S.%f')
+
+        # Log the results to the output CSV file
+        self.request_count += 1
+        if self.request_count > self.max_requests:
+            self.environment.runner.quit()
+
+        self.log_results(start_time_str, end_time_str, input_tokens, output_tokens, latency, throughput, latency_per_token, ttft)
+        try:
+            barrier.wait()
+        except BrokenBarrierError:
+            pass
+
+    def log_results(self, start_time, end_time, input_tokens, output_tokens, latency, throughput, latency_per_token, ttft):
+        """
+        Log the results to the output CSV file.
+        """
+        with open(self.output_file_path, 'a', newline='') as csvfile:
+            fieldnames = [
+                'request', 'start_time', 'end_time', 'input_tokens',
+                'output_tokens', 'latency(ms)', 'throughput(tokens/second)',
+                'latency_per_token(ms/tokens)', 'TTFT(ms)'
+            ]
+            writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+
+            if csvfile.tell() == 0:
+                writer.writeheader()
+
+            writer.writerow({
+                'request': self.request_count,
+                'start_time': start_time,
+                'end_time': end_time,
+                'input_tokens': input_tokens,
+                'output_tokens': output_tokens,
+                'latency(ms)': f"{latency * 1000:.3f}",
+                'throughput(tokens/second)': f"{throughput:.3f}",
+                'latency_per_token(ms/tokens)': f"{latency_per_token:.3f}",
+                'TTFT(ms)': f"{ttft * 1000:.3f}"
+            })
+
+    def on_stop(self):
+        """
+        Perform actions on stopping the test.
+        """
+        try: 
+            barrier.wait()
+        except BrokenBarrierError:
+            pass
+        self.environment.runner.quit()
