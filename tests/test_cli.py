@@ -3,6 +3,7 @@ from click.testing import CliRunner
 from echoswift.cli import cli
 from pathlib import Path
 import yaml
+from unittest.mock import patch
 
 @pytest.fixture
 def runner():
@@ -34,8 +35,8 @@ def test_cli_help(runner):
     assert 'dataprep' in result.output
     assert 'plot' in result.output
 
-def test_dataprep_command(runner, mocker):
-    mock_download = mocker.patch('echoswift.cli.download_dataset_files')
+@patch('echoswift.cli.download_dataset_files')
+def test_dataprep_command(mock_download, runner):
     result = runner.invoke(cli, ['dataprep'])
     assert result.exit_code == 0
     mock_download.assert_called_once_with("sarthakdwi/EchoSwift-8k")
@@ -45,8 +46,8 @@ def test_start_command_without_config(runner):
     assert result.exit_code != 0
     assert 'Error: Missing option \'--config\'' in result.output
 
-def test_start_command_with_config(runner, mock_config_file, mocker):
-    mock_benchmark = mocker.patch('echoswift.cli.EchoSwift')
+@patch('echoswift.cli.EchoSwift')
+def test_start_command_with_config(mock_benchmark, runner, mock_config_file):
     mock_benchmark_instance = mock_benchmark.return_value
     
     result = runner.invoke(cli, ['start', '--config', str(mock_config_file)])
@@ -60,8 +61,8 @@ def test_plot_command_without_results_dir(runner):
     assert result.exit_code != 0
     assert 'Error: Missing option \'--results-dir\'' in result.output
 
-def test_plot_command_with_results_dir(runner, tmp_path, mocker):
-    mock_plot = mocker.patch('echoswift.cli.plot_benchmark_results')
+@patch('echoswift.cli.plot_benchmark_results')
+def test_plot_command_with_results_dir(mock_plot, runner, tmp_path):
     results_dir = tmp_path / "test_results"
     results_dir.mkdir()
     
