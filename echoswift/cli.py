@@ -40,8 +40,8 @@ def start(config):
     
     dataset_dir = Path("Input_Dataset")
     if not dataset_dir.exists() or not any(dataset_dir.iterdir()):
-        logging.warning("Filtered dataset not found. Please run 'echoswift dataprep' before starting the benchmark.")
-        return
+        logging.error("Filtered dataset not found. Please run 'echoswift dataprep' before starting the benchmark.")
+        raise click.Abort()
 
     logging.info("Using Filtered_ShareGPT_Dataset for the benchmark.")
     

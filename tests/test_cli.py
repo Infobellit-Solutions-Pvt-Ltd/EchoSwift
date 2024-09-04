@@ -3,7 +3,7 @@ from click.testing import CliRunner
 from echoswift.cli import cli
 from pathlib import Path
 import yaml
-from unittest.mock import patch
+from unittest.mock import patch, Mock
 
 @pytest.fixture
 def runner():
@@ -46,15 +46,30 @@ def test_start_command_without_config(runner):
     assert result.exit_code != 0
     assert 'Error: Missing option \'--config\'' in result.output
 
+@patch('echoswift.cli.Path')
 @patch('echoswift.cli.EchoSwift')
-def test_start_command_with_config(mock_benchmark, runner, mock_config_file):
-    mock_benchmark_instance = mock_benchmark.return_value
+def test_start_command_with_config(mock_echoswift, mock_path, runner, mock_config_file):
+    # Mock the dataset directory to exist and have files
+    mock_path.return_value.exists.return_value = True
+    mock_path.return_value.iterdir.return_value = [Mock()]
     
+    mock_benchmark_instance = mock_echoswift.return_value
+
     result = runner.invoke(cli, ['start', '--config', str(mock_config_file)])
     
     assert result.exit_code == 0
-    mock_benchmark.assert_called_once()
+    mock_echoswift.assert_called_once()
     mock_benchmark_instance.run_benchmark.assert_called_once()
+
+@patch('echoswift.cli.Path')
+def test_start_command_without_dataset(mock_path, runner, mock_config_file):
+    # Mock the dataset directory to not exist
+    mock_path.return_value.exists.return_value = False
+
+    result = runner.invoke(cli, ['start', '--config', str(mock_config_file)])
+    
+    assert result.exit_code != 0
+    assert "Filtered dataset not found. Please run 'echoswift dataprep' before starting the benchmark." in result.output
 
 def test_plot_command_without_results_dir(runner):
     result = runner.invoke(cli, ['plot'])
