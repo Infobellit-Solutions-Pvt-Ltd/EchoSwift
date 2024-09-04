@@ -6,15 +6,13 @@ on:
   pull_request:
     branches: [ akhil ]
   release:
-    types: [created, published]
+    types: [published]
 
 jobs:
   test:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
-      with:
-        ref: akhil
     - name: Set up Python 3.10
       uses: actions/setup-python@v2
       with:
@@ -43,11 +41,9 @@ jobs:
   build-and-publish:
     needs: test
     runs-on: ubuntu-latest
-    if: github.event_name == 'release' && github.event.action == 'created'
+    if: github.event_name == 'release' && github.event.action == 'published'
     steps:
     - uses: actions/checkout@v2
-      with:
-        ref: akhil
     - name: Set up Python 3.10
       uses: actions/setup-python@v2
       with:
