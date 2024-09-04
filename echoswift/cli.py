@@ -40,24 +40,32 @@ def start(config):
     
     dataset_dir = Path("Input_Dataset")
     if not dataset_dir.exists() or not any(dataset_dir.iterdir()):
-        logging.error("Filtered dataset not found. Please run 'echoswift dataprep' before starting the benchmark.")
+        error_msg = "Filtered dataset not found. Please run 'echoswift dataprep' before starting the benchmark."
+        logging.error(error_msg)
+        click.echo(error_msg, err=True)
         raise click.Abort()
 
     logging.info("Using Filtered_ShareGPT_Dataset for the benchmark.")
     
-    benchmark = EchoSwift(
-        output_dir=cfg['out_dir'],
-        api_url=cfg['base_url'],
-        provider=cfg['provider'],
-        model_name=cfg.get('model'),
-        max_requests=cfg['max_requests'],
-        user_counts=cfg['user_counts'],
-        input_tokens=cfg['input_tokens'],
-        output_tokens=cfg['output_tokens'],
-        dataset_dir=str(dataset_dir)
-    )
-    
-    benchmark.run_benchmark()
+    try:
+        benchmark = EchoSwift(
+            output_dir=cfg['out_dir'],
+            api_url=cfg['base_url'],
+            provider=cfg['provider'],
+            model_name=cfg.get('model'),
+            max_requests=cfg['max_requests'],
+            user_counts=cfg['user_counts'],
+            input_tokens=cfg['input_tokens'],
+            output_tokens=cfg['output_tokens'],
+            dataset_dir=str(dataset_dir)
+        )
+        
+        benchmark.run_benchmark()
+    except Exception as e:
+        error_msg = f"An error occurred while running the benchmark: {str(e)}"
+        logging.error(error_msg)
+        click.echo(error_msg, err=True)
+        raise click.Abort()
 
 @cli.command()
 def dataprep():

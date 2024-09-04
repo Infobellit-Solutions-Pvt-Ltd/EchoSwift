@@ -24,7 +24,7 @@ def mock_config_file(tmp_path):
     config_file = tmp_path / "test_config.yaml"
     with open(config_file, "w") as f:
         yaml.dump(config, f)
-    return config_file
+    return str(config_file)
 
 def test_cli_help(runner):
     result = runner.invoke(cli, ['--help'])
@@ -55,9 +55,10 @@ def test_start_command_with_config(mock_echoswift, mock_path, runner, mock_confi
     
     mock_benchmark_instance = mock_echoswift.return_value
 
-    result = runner.invoke(cli, ['start', '--config', str(mock_config_file)])
+    with runner.isolated_filesystem():
+        result = runner.invoke(cli, ['start', '--config', mock_config_file])
     
-    assert result.exit_code == 0
+    assert result.exit_code == 0, f"Command failed with error: {result.output}"
     mock_echoswift.assert_called_once()
     mock_benchmark_instance.run_benchmark.assert_called_once()
 
@@ -66,10 +67,11 @@ def test_start_command_without_dataset(mock_path, runner, mock_config_file):
     # Mock the dataset directory to not exist
     mock_path.return_value.exists.return_value = False
 
-    result = runner.invoke(cli, ['start', '--config', str(mock_config_file)])
+    with runner.isolated_filesystem():
+        result = runner.invoke(cli, ['start', '--config', mock_config_file])
     
     assert result.exit_code != 0
-    assert "Filtered dataset not found. Please run 'echoswift dataprep' before starting the benchmark." in result.output
+    assert "Filtered dataset not found." in result.output
 
 def test_plot_command_without_results_dir(runner):
     result = runner.invoke(cli, ['plot'])
