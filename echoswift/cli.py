@@ -1,10 +1,12 @@
 import click
-import yaml
+import json
 from pathlib import Path
 from echoswift.llm_inference_benchmark import EchoSwift
 from echoswift.dataset import download_dataset_files
 from echoswift.utils.plot_results import plot_benchmark_results 
 import logging
+from tabulate import tabulate
+import pandas as pd
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
@@ -12,7 +14,7 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 
 def load_config(config_file):
     with open(config_file, 'r') as f:
-        return yaml.safe_load(f)
+        return json.load(f)
 
 @click.group(context_settings=CONTEXT_SETTINGS)
 def cli():
@@ -21,8 +23,8 @@ def cli():
 
     \b
     Usage:
-    1. Run 'echoswift dataprep' to download the dataset and create a default config.yaml
-    2. Run 'echoswift start --config config.yaml' to start the benchmark
+    1. Run 'echoswift dataprep' to download the dataset and create config.json
+    2. Run 'echoswift start --config config.json' to start the benchmark
     3. Run 'echoswift plot --results-dir benchmark_results' to generate plots
 
     For more detailed information, visit:
@@ -30,16 +32,17 @@ def cli():
     """
     pass
 
-def create_default_config(output='config.yaml'):
-    default_config = {
-        "out_dir": "benchmark_results",
-        "base_url": "http://localhost:8000/v1/completions",
+def create_config(output='config.json'):
+    config = {
+        "_comment": "EchoSwift Configuration",
+        "out_dir": "test_results",
+        "base_url": "http://10.216.178.15:8000/v1/completions",
         "provider": "vLLM",
         "model": "meta-llama/Meta-Llama-3-8B",
         "max_requests": 5,
-        "user_counts": [1, 3],
-        "input_tokens": [32, 64],
-        "output_tokens": [128, 256]
+        "user_counts": [3],
+        "input_tokens": [32],
+        "output_tokens": [256]
     }
 
     output_path = Path(output)
@@ -47,22 +50,23 @@ def create_default_config(output='config.yaml'):
         click.confirm(f"The file {output} already exists. Do you want to overwrite it?", abort=True)
 
     with open(output_path, 'w') as f:
-        yaml.dump(default_config, f, default_flow_style=False)
+        json.dump(config, f, indent=2)
 
-    click.echo(f"Default configuration file created: {output_path}")
-    click.echo("You can modify this file according to your needs before running the benchmark.")
+    click.echo(f"Configuration file created: {output_path}")
+    click.echo("Please review and modify this file according to your needs before running the benchmark.")
 
 @cli.command()
-@click.option('--config', default='config.yaml', help='Name of the output configuration file')
+@click.option('--config', default='config.json', help='Name of the output configuration file')
 def dataprep(config):
-    """Download the filtered ShareGPT dataset and create a default config file"""
+    """Download the filtered ShareGPT dataset and create the config.json file"""
     # Download dataset
     click.echo("Downloading the filtered ShareGPT dataset...")
     download_dataset_files("sarthakdwi/EchoSwift-8k")
     
-    # Create default config
-    click.echo("Creating default configuration file...")
-    create_default_config(config)
+
+    # Create config
+    click.echo("\nCreating configuration file...")
+    create_config(config)
     
     click.echo("Data preparation completed. You're now ready to run the benchmark.")
 
@@ -96,6 +100,19 @@ def start(config):
         )
         
         benchmark.run_benchmark()
+        
+        # Pretty print results after each user count completes
+        for u in cfg['user_counts']:
+            user_dir = Path(cfg['out_dir']) / f"{u}_User"
+            for input_token in cfg['input_tokens']:
+                avg_file = user_dir / f"avg_{input_token}_input_tokens.csv"
+                if avg_file.exists():
+                    df = pd.read_csv(avg_file)
+                    df = df.round(3)
+                    table = tabulate(df, headers='keys', tablefmt='pretty', showindex=False)
+                    click.echo(f"\nAverage results for {u} users, {input_token} input tokens:")
+                    click.echo(table)
+
     except Exception as e:
         error_msg = f"An error occurred while running the benchmark: {str(e)}"
         logging.error(error_msg)

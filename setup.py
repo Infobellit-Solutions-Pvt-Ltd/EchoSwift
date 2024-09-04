@@ -5,7 +5,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setup(
     name="echoswift",
-    version="0.1.5",
+    version="1.1.0",
     author="Infobell AI Team",
     author_email="akhil@infobellit.com",
     description="LLM Inference Benchmarking Tool",
@@ -26,6 +26,7 @@ setup(
         "locust",
         "transformers",
         "datasets",
+        "tabulate",
     ],
     entry_points={
         "console_scripts": [

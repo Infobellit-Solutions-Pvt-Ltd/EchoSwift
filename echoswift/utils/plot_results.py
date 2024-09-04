@@ -5,7 +5,7 @@ from pathlib import Path
 
 def process_csv_files(directory_path):
     user_number = int(''.join(filter(str.isdigit, directory_path.name)))
-    latency_throughput_data = {}
+    data = {}
 
     csv_files = sorted(directory_path.glob('avg_*_input_tokens.csv'), 
                        key=lambda x: int(''.join(filter(str.isdigit, x.stem))))
@@ -16,16 +16,17 @@ def process_csv_files(directory_path):
             output_token = row['output tokens']
             token_latency = row['latency_per_token(ms/tokens)']
             throughput = row['throughput(tokens/second)']
-            latency_throughput_data.setdefault(user_number, []).append((output_token, token_latency, throughput))
+            ttft = row['TTFT(ms)']
+            data.setdefault(user_number, []).append((output_token, token_latency, throughput, ttft))
 
-    return latency_throughput_data
+    return data
 
 def write_to_csv(data, output_file):
     with open(output_file, 'w') as f:
-        f.write('Number of Parallel Requests,Output Token,Token Latency (ms/tokens),Throughput (tokens/second)\n')
+        f.write('Number of Parallel Requests,Output Token,Token Latency (ms/tokens),Throughput (tokens/second),TTFT (ms)\n')
         for num_Requests, values in sorted(data.items()):
             for value in values:
-                f.write(f'{num_Requests},{value[0]},{value[1]},{value[2]}\n')
+                f.write(f'{num_Requests},{value[0]},{value[1]},{value[2]},{value[3]}\n')
 
 def plot_line_chart(data, x_label, y_label, title, output_file):
     plt.figure(figsize=(10, 6))
@@ -51,32 +52,38 @@ def plot_line_chart(data, x_label, y_label, title, output_file):
     plt.grid(False)
     plt.tight_layout()
     plt.savefig(output_file)
+    plt.close()
 
 def plot_benchmark_results(base_directory):
     base_directory = Path(base_directory)
     output_file = base_directory / 'aggregated_data.csv'
     
-    latency_throughput_data = {}
+    data = {}
     for directory in base_directory.iterdir():
         if directory.is_dir() and "_User" in directory.name:
-            data = process_csv_files(directory)
-            for num_Requests, values in data.items():
-                latency_throughput_data.setdefault(num_Requests, []).extend(values)
+            directory_data = process_csv_files(directory)
+            for num_Requests, values in directory_data.items():
+                data.setdefault(num_Requests, []).extend(values)
 
-    write_to_csv(latency_throughput_data, output_file)
+    write_to_csv(data, output_file)
     print(f"Aggregated data has been written to {output_file}")
 
     df = pd.read_csv(output_file)
 
     plot_line_chart(df[['Number of Parallel Requests', 'Token Latency (ms/tokens)']], 
                     'Number of Parallel Requests', 'Token Latency (ms/tokens)', 
-                    'Token Latency vs. Number of Parallel Requests', 
+                    'Parallel Requests vs Token Latency', 
                     base_directory / 'token_latency_plot.png')
 
     plot_line_chart(df[['Number of Parallel Requests', 'Throughput (tokens/second)']], 
                     'Number of Parallel Requests', 'Throughput (tokens/second)', 
-                    'Throughput vs. Number of Parallel Requests', 
+                    'Parallel Requests vs Throughput', 
                     base_directory / 'throughput_plot.png')
+
+    plot_line_chart(df[['Number of Parallel Requests', 'TTFT (ms)']], 
+                    'Number of Parallel Requests', 'TTFT (ms)', 
+                    'Parallel Requests vs Time to First Token', 
+                    base_directory / 'ttft_plot.png')
 
 if __name__ == "__main__":
     import argparse
