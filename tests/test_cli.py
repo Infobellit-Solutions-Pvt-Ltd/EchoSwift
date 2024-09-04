@@ -36,10 +36,23 @@ def test_cli_help(runner):
     assert 'plot' in result.output
 
 @patch('echoswift.cli.download_dataset_files')
-def test_dataprep_command(mock_download, runner):
+@patch('echoswift.cli.create_default_config')
+def test_dataprep_command(mock_create_config, mock_download, runner):
     result = runner.invoke(cli, ['dataprep'])
     assert result.exit_code == 0
     mock_download.assert_called_once_with("sarthakdwi/EchoSwift-8k")
+    mock_create_config.assert_called_once_with('config.yaml')
+    assert "Downloading the filtered ShareGPT dataset..." in result.output
+    assert "Creating default configuration file..." in result.output
+    assert "Data preparation completed." in result.output
+
+@patch('echoswift.cli.download_dataset_files')
+@patch('echoswift.cli.create_default_config')
+def test_dataprep_command_custom_config(mock_create_config, mock_download, runner):
+    result = runner.invoke(cli, ['dataprep', '--config', 'custom_config.yaml'])
+    assert result.exit_code == 0
+    mock_download.assert_called_once_with("sarthakdwi/EchoSwift-8k")
+    mock_create_config.assert_called_once_with('custom_config.yaml')
 
 def test_start_command_without_config(runner):
     result = runner.invoke(cli, ['start'])
