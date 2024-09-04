@@ -48,7 +48,21 @@ def test_start_command_without_config(runner):
 
 @patch('echoswift.cli.Path')
 @patch('echoswift.cli.EchoSwift')
-def test_start_command_with_config(mock_echoswift, mock_path, runner, mock_config_file):
+@patch('echoswift.cli.load_config')
+def test_start_command_with_config(mock_load_config, mock_echoswift, mock_path, runner, mock_config_file):
+    # Mock the config loading
+    mock_config = {
+        "out_dir": "test_results",
+        "base_url": "http://localhost:8000/v1/completions",
+        "provider": "vLLM",
+        "model": "meta-llama/Meta-Llama-3-8B",
+        "max_requests": 5,
+        "user_counts": [3],
+        "input_tokens": [32],
+        "output_tokens": [256]
+    }
+    mock_load_config.return_value = mock_config
+
     # Mock the dataset directory to exist and have files
     mock_path.return_value.exists.return_value = True
     mock_path.return_value.iterdir.return_value = [Mock()]
@@ -59,7 +73,17 @@ def test_start_command_with_config(mock_echoswift, mock_path, runner, mock_confi
         result = runner.invoke(cli, ['start', '--config', mock_config_file])
     
     assert result.exit_code == 0, f"Command failed with error: {result.output}"
-    mock_echoswift.assert_called_once()
+    mock_echoswift.assert_called_once_with(
+        output_dir=mock_config['out_dir'],
+        api_url=mock_config['base_url'],
+        provider=mock_config['provider'],
+        model_name=mock_config['model'],
+        max_requests=mock_config['max_requests'],
+        user_counts=mock_config['user_counts'],
+        input_tokens=mock_config['input_tokens'],
+        output_tokens=mock_config['output_tokens'],
+        dataset_dir=str(mock_path.return_value)
+    )
     mock_benchmark_instance.run_benchmark.assert_called_once()
 
 @patch('echoswift.cli.Path')
