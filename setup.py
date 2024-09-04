@@ -5,7 +5,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setup(
     name="echoswift",
-    version="0.1.1",
+    version="0.1.2",
     author="Infobell AI Team",
     author_email="akhil@infobellit.com",
     description="LLM Inference Benchmarking Tool",
@@ -14,6 +14,9 @@ setup(
     url="https://github.com/Infobellit-Solutions-Pvt-Ltd/EchoSwift",
     packages=find_packages(include=['echoswift', 'echoswift.*']),
     include_package_data=True,
+    package_data={
+        'echoswift': ['utils/*.py', '*.py'],
+    },
     install_requires=[
         "click",
         "pyyaml",

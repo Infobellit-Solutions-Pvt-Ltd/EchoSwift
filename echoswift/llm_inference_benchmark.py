@@ -6,6 +6,7 @@ from typing import List
 from tqdm import tqdm
 import time
 import signal
+import pkg_resources
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
@@ -61,9 +62,10 @@ class EchoSwift:
         if self.provider in ["Ollama", "vLLM"]:
             env["MODEL_NAME"] = self.model_name
 
+        locust_file = pkg_resources.resource_filename('echoswift', 'llm_inference_master.py')
         command = [
             "locust",
-            "-f", "echoswift/llm_inference_master.py",
+            "-f", locust_file,
             "--headless",
             "-H", self.api_url,
             "-u", str(users),
@@ -109,15 +111,20 @@ class EchoSwift:
         input_file = user_dir / f"{input_token}_input_tokens.csv"
         output_file = user_dir / f"avg_{input_token}_input_tokens.csv"
         
+        avg_script = pkg_resources.resource_filename('echoswift', 'utils/avg_locust_results.py')
         command = [
             "python3",
-            "echoswift/utils/avg_locust_results.py",
+            avg_script,
             "--input_csv_filename", str(input_file),
             "--output_csv_filename", str(output_file),
             "--tokens"
         ] + [str(t) for t in self.output_tokens]
 
-        subprocess.run(command, check=True)
+        try:
+            subprocess.run(command, check=True)
+        except subprocess.CalledProcessError as e:
+            logging.error(f"Error calculating average: {e}")
+            raise
 
 def run_echoswift(output_dir: str, api_url: str, provider: str, model_name: str = None,
                   max_requests: int = 5, user_counts: List[int] = [1],
