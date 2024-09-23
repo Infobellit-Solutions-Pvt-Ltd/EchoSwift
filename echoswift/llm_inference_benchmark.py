@@ -4,20 +4,19 @@ import logging
 from pathlib import Path
 from typing import List
 from tqdm import tqdm
-import time
 import signal
 import pkg_resources
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 class EchoSwift:
-    def __init__(self, output_dir: str, api_url: str, provider: str, model_name: str = None,
+    def __init__(self, output_dir: str, api_url: str, inference_server: str, model_name: str = None,
                  max_requests: int = 5, user_counts: List[int] = [1],
                  input_tokens: List[int] = [32], output_tokens: List[int] = [256],
                  dataset_dir: str = "Input_Dataset"):
         self.output_dir = Path(output_dir)
         self.api_url = api_url
-        self.provider = provider
+        self.inference_server = inference_server
         self.model_name = model_name
         self.max_requests = max_requests
         self.user_counts = user_counts
@@ -54,12 +53,12 @@ class EchoSwift:
             "NUM_USERS": str(users),
             "MAX_NEW_TOKENS": str(output_tokens),
             "API_URL": self.api_url,
-            "PROVIDER": self.provider,
+            "INFERENCE_SERVER": self.inference_server,
             "INPUT_DATASET": str(self.dataset_dir / f"Dataset_{input_tokens}.csv"),
             "OUTPUT_FILE": str(output_file)
         })
 
-        if self.provider in ["Ollama", "vLLM"]:
+        if self.inference_server in ["Ollama", "vLLM", "NIMS"]:
             env["MODEL_NAME"] = self.model_name
 
         locust_file = pkg_resources.resource_filename('echoswift', 'llm_inference_master.py')
@@ -126,10 +125,10 @@ class EchoSwift:
             logging.error(f"Error calculating average: {e}")
             raise
 
-def run_echoswift(output_dir: str, api_url: str, provider: str, model_name: str = None,
+def run_echoswift(output_dir: str, api_url: str, inference_server: str, model_name: str = None,
                   max_requests: int = 5, user_counts: List[int] = [1],
                   input_tokens: List[int] = [32], output_tokens: List[int] = [256]):
-    benchmark = EchoSwift(output_dir, api_url, provider, model_name,
+    benchmark = EchoSwift(output_dir, api_url, inference_server, model_name,
                           max_requests, user_counts, input_tokens, output_tokens)
     benchmark.run_benchmark()
 

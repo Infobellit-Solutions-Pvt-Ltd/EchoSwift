@@ -1,12 +1,12 @@
-# EchoSwift: LLM Inference Benchmarking Tool
+# EchoSwift: LLM Inference Benchmarking Tool by Infobell IT
 
-EchoSwift is a powerful and flexible tool designed for benchmarking Large Language Model (LLM) inference. It allows users to measure and analyze the performance of LLM endpoints across various metrics, including latency, throughput, and time to first token (TTFT).
+EchoSwift is a powerful and flexible tool designed for benchmarking Large Language Model (LLM) inference. It allows users to measure and analyze the performance of LLM endpoints across various metrics, including token latency, throughput, and time to first token (TTFT).
 
 ![EchoSwift](images/Echoswift.png)
 
 ## Features
 
-- Benchmark LLM inference across multiple providers (e.g., Ollama, vLLM, TGI)
+- Benchmark LLM inference across multiple Inference Servers
 - Measure key performance metrics: latency, throughput, and TTFT
 - Support for varying input and output token lengths
 - Simulate concurrent users to test scalability
@@ -22,6 +22,12 @@ The performance metrics captured for varying input and output tokens and paralle
 
 ![metrics](images/metric.png)
 
+## Supported Inference Servers
+  - TGI
+  - vLLM
+  - Ollama
+  - Llamacpp
+  - NIMS
 ## Installation
 
 You can install EchoSwift using pip:
@@ -38,16 +44,13 @@ cd EchoSwift
 pip install -e .
 ```
 
-## Requirements
-
-- Python 3.10+
-- Dependencies listed in `requirements.txt`
-
 ## Usage
 
-EchoSwift provides a simple CLI interface for running benchmarks. Here are the main commands:
+EchoSwift provides a simple CLI interface for running LLM Inference benchmarks.
 
-### 1. Download and Filter Dataset
+Below are the steps to run a sample test, assuming the generation endpoint is active.
+
+### 1. Download the Dataset and create a default `config.json`
 
 Before running a benchmark, you need to download and filter the dataset:
 
@@ -55,39 +58,41 @@ Before running a benchmark, you need to download and filter the dataset:
 echoswift dataprep
 ```
 
-This command will download the ShareGPT dataset and filter it based on various input token lengths.
+This command will download the filtered ShareGPT dataset from Huggingface and creates a sample config.json
 
 ### 2. Configure the Benchmark
 
-Create or modify the `config.yaml` file in the project root directory. Here's an example configuration:
+Modify the `config.json` file in the project root directory. Here's an example configuration:
 
-```yaml
-out_dir: "results"
-base_url: "http://localhost:11434/api/generate"
-provider: "Ollama"
-model: "llama2" # Model is required for Ollama and vLLM
-max_requests: 5
-user_counts: [1, 3, 10]
-input_tokens: [32]
-output_tokens: [256]
+```json
+{
+  "_comment": "EchoSwift Configuration",
+  "out_dir": "test_results",
+  "base_url": "http://10.216.178.15:8000/v1/completions",
+  "provider": "vLLM",
+  "model": "meta-llama/Meta-Llama-3-8B",
+  "max_requests": 5,
+  "user_counts": [3],
+  "input_tokens": [32],
+  "output_tokens": [256]
+}
 ```
 
-Adjust these parameters according to your needs and the LLM endpoint you're benchmarking.
+Adjust these parameters according to your LLM endpoint you're benchmarking.
 
 ### 3. Run the Benchmark
 
-To start the benchmark using the configuration from `config.yaml`:
+To start the benchmark using the configuration from `config.json`:
 
 ```bash
-echoswift start
+echoswift start --config path/to/your/config.json
 ```
 
-If you want to use a different configuration file:
+### 4. Plot the Results
 
 ```bash
-echoswift start --config path/to/your/config.yaml
+echoswift plot --results-dir path/to/your/results_dir
 ```
-
 ## Output
 
 EchoSwift will create a `results` directory (or the directory specified in `out_dir`) containing:
@@ -98,19 +103,7 @@ EchoSwift will create a `results` directory (or the directory specified in `out_
 
 ## Analyzing Results
 
-After the benchmark completes, you can find detailed CSV files in the output directory. These files contain information about latency, throughput, and TTFT for each test configuration.
-
-<!-- ## Advanced Usage
-
-For more advanced usage and customization options, please refer to the [documentation](link-to-your-documentation). -->
-
-<!-- ## Contributing
-
-We welcome contributions to EchoSwift! Please see our [Contributing Guide](CONTRIBUTING.md) for more details. -->
-
-<!-- ## License
-
-EchoSwift is released under the [MIT License](LICENSE). -->
+After the benchmark completes, you can find CSV files in the output directory. These files contain information about latency, throughput, and TTFT for each test configuration.
 
 ## Citation
 

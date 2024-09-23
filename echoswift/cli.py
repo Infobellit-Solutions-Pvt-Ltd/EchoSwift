@@ -24,11 +24,11 @@ def cli():
     \b
     Usage:
     1. Run 'echoswift dataprep' to download the dataset and create config.json
-    2. Run 'echoswift start --config config.json' to start the benchmark
-    3. Run 'echoswift plot --results-dir benchmark_results' to generate plots
+    2. Run 'echoswift start --config path/to/config.json' to start the benchmark
+    3. Run 'echoswift plot --results-dir path/to/benchmark_results' to generate plots
 
-    For more detailed information, visit:
-    https://github.com/Infobellit-Solutions-Pvt-Ltd/EchoSwift/blob/main/README.md
+    For more detailed information, visit: \n
+    https://github.com/Infobellit-Solutions-Pvt-Ltd/EchoSwift
     """
     pass
 
@@ -37,7 +37,7 @@ def create_config(output='config.json'):
         "_comment": "EchoSwift Configuration",
         "out_dir": "test_results",
         "base_url": "http://10.216.178.15:8000/v1/completions",
-        "provider": "vLLM",
+        "inference_server": "vLLM",
         "model": "meta-llama/Meta-Llama-3-8B",
         "max_requests": 5,
         "user_counts": [3],
@@ -53,7 +53,7 @@ def create_config(output='config.json'):
         json.dump(config, f, indent=2)
 
     click.echo(f"Configuration file created: {output_path}")
-    click.echo("Please review and modify this file according to your needs before running the benchmark.")
+    click.echo("Please review and modify this file before running the benchmark.")
 
 @cli.command()
 @click.option('--config', default='config.json', help='Name of the output configuration file')
@@ -90,7 +90,7 @@ def start(config):
         benchmark = EchoSwift(
             output_dir=cfg['out_dir'],
             api_url=cfg['base_url'],
-            provider=cfg['provider'],
+            inference_server=cfg['inference_server'],
             model_name=cfg.get('model'),
             max_requests=cfg['max_requests'],
             user_counts=cfg['user_counts'],
@@ -102,17 +102,27 @@ def start(config):
         benchmark.run_benchmark()
         
         # Pretty print results after each user count completes
+        all_results = []
         for u in cfg['user_counts']:
             user_dir = Path(cfg['out_dir']) / f"{u}_User"
             for input_token in cfg['input_tokens']:
                 avg_file = user_dir / f"avg_{input_token}_input_tokens.csv"
                 if avg_file.exists():
                     df = pd.read_csv(avg_file)
-                    df = df.round(3)
-                    table = tabulate(df, headers='keys', tablefmt='pretty', showindex=False)
-                    click.echo(f"\nAverage results for {u} users, {input_token} input tokens:")
-                    click.echo(table)
+                    df['Users'] = u
+                    df['Input Tokens'] = input_token
+                    all_results.append(df)
 
+        if all_results:
+            combined_df = pd.concat(all_results, ignore_index=True)
+            combined_df = combined_df[['Users', 'Input Tokens', 'output tokens', 'throughput(tokens/second)', 'latency(ms)', 'TTFT(ms)', 'latency_per_token(ms/token)']]
+            combined_df = combined_df.round(3)
+            
+            # Sort the DataFrame
+            combined_df = combined_df.sort_values(['Users', 'Input Tokens', 'output tokens'])
+
+            click.echo(tabulate(combined_df, headers='keys', tablefmt='pretty', showindex=False))
+                        
     except Exception as e:
         error_msg = f"An error occurred while running the benchmark: {str(e)}"
         logging.error(error_msg)

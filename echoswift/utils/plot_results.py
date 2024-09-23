@@ -14,7 +14,7 @@ def process_csv_files(directory_path):
         df = pd.read_csv(csv_file)
         for _, row in df.iterrows():
             output_token = row['output tokens']
-            token_latency = row['latency_per_token(ms/tokens)']
+            token_latency = row['latency_per_token(ms/token)']
             throughput = row['throughput(tokens/second)']
             ttft = row['TTFT(ms)']
             data.setdefault(user_number, []).append((output_token, token_latency, throughput, ttft))
@@ -23,7 +23,7 @@ def process_csv_files(directory_path):
 
 def write_to_csv(data, output_file):
     with open(output_file, 'w') as f:
-        f.write('Number of Parallel Requests,Output Token,Token Latency (ms/tokens),Throughput (tokens/second),TTFT (ms)\n')
+        f.write('Number of Parallel Requests,Output Token,Token Latency (ms/token),Throughput (tokens/second),TTFT (ms)\n')
         for num_Requests, values in sorted(data.items()):
             for value in values:
                 f.write(f'{num_Requests},{value[0]},{value[1]},{value[2]},{value[3]}\n')
@@ -70,8 +70,8 @@ def plot_benchmark_results(base_directory):
 
     df = pd.read_csv(output_file)
 
-    plot_line_chart(df[['Number of Parallel Requests', 'Token Latency (ms/tokens)']], 
-                    'Number of Parallel Requests', 'Token Latency (ms/tokens)', 
+    plot_line_chart(df[['Number of Parallel Requests', 'Token Latency (ms/token)']], 
+                    'Number of Parallel Requests', 'Token Latency (ms/token)', 
                     'Parallel Requests vs Token Latency', 
                     base_directory / 'token_latency_plot.png')
 

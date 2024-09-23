@@ -29,7 +29,7 @@ def calculate_average(rows: List[List[str]], column_indices: List[int], start: i
         return [None] * len(column_indices)
 
 def calculate_averages(input_csv_filename: str, output_csv_filename: str, tokens: List[int]):
-    column_names = ["throughput(tokens/second)", "latency(ms)", "TTFT(ms)", "latency_per_token(ms/tokens)"]
+    column_names = ["throughput(tokens/second)", "latency(ms)", "TTFT(ms)", "latency_per_token(ms/token)"]
     rows = read_csv(input_csv_filename)
 
     if not rows:
@@ -61,7 +61,6 @@ def calculate_averages(input_csv_filename: str, output_csv_filename: str, tokens
                 if len(average) > 1 and i // 2 < len(tokens):
                     writer.writerow([tokens[i // 2]] + average)
 
-        logging.info(f"Average calculations complete. Results written to {output_csv_filename}")
     except PermissionError:
         logging.error(f"Permission denied when trying to write to: {output_csv_filename}")
         sys.exit(1)

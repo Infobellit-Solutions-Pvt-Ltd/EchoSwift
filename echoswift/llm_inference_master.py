@@ -36,7 +36,7 @@ class APITestUser(HttpUser):
         self.dataset_file = os.environ.get('INPUT_DATASET', '')
         self.questions = self.load_dataset(self.dataset_file)
         self.output_file_path = os.environ.get('OUTPUT_FILE', 'output.csv')
-        self.provider = os.environ.get('PROVIDER', " ")
+        self.inference_server = os.environ.get('INFERENCE_SERVER', " ")
         self.model_name = os.environ.get('MODEL_NAME', " ")
 
     @staticmethod
@@ -60,24 +60,37 @@ class APITestUser(HttpUser):
         """
         prompt = random.choice(self.questions)
 
-        if self.provider == "TGI":
+        if self.inference_server == "TGI":
             data = {'inputs': prompt, 'parameters': {'max_new_tokens': self.max_new_tokens}}
-        elif self.provider == "Ollama":
+        elif self.inference_server == "Ollama":
             data = {
                 "model": self.model_name, 
                 "prompt": prompt, 
                 "stream": True, 
                 "options": {"num_predict": self.max_new_tokens}
             }
-        elif self.provider == "Llamacpp":
+        elif self.inference_server == "Llamacpp":
             data = {"prompt": prompt, "n_predict": self.max_new_tokens, "stream": True}
 
-        elif self.provider == "vLLM":
+        elif self.inference_server == "vLLM":
             data = {
                 "model": self.model_name,
                 "prompt": prompt,
                 "max_tokens": self.max_new_tokens,
                 "min_tokens": self.max_new_tokens,
+                "stream": True
+            }
+
+        elif self.inference_server == "NIMS":
+            data={
+                "messages": [
+                    {
+                        "content": prompt,
+                        "role": "user"
+                    }
+                ],
+                "model": self.model_name,
+                "max_tokens": self.max_new_tokens,
                 "stream": True
             }
 
@@ -90,14 +103,15 @@ class APITestUser(HttpUser):
         """
         generated_text = ""
         ttft = None
-        provider_handlers = {
+        inference_server_handlers = {
             "TGI": self._process_tgi_response,
             "Ollama": self._process_ollama_response,
             "Llamacpp": self._process_llamacpp_response,
-            "vLLM":self._process_vLLM_response
+            "vLLM":self._process_vLLM_response,
+            "NIMS":self._process_NIMS_response,
         }
 
-        handler = provider_handlers.get(self.provider, None)
+        handler = inference_server_handlers.get(self.inference_server, None)
         if handler:
             generated_text, ttft = handler(response)
 
@@ -106,7 +120,7 @@ class APITestUser(HttpUser):
 
     def _process_tgi_response(self, response):
         """
-        Process the response for TGI provider.
+        Process the response for TGI inference_server.
         """
         generated_text = ""
         ttft = None
@@ -130,7 +144,7 @@ class APITestUser(HttpUser):
 
     def _process_ollama_response(self, response):
         """
-        Process the response for Ollama provider.
+        Process the response for Ollama inference_server.
         """
         generated_text = ""
         ttft = None
@@ -153,7 +167,7 @@ class APITestUser(HttpUser):
 
     def _process_llamacpp_response(self, response):
         """
-        Process the response for Llamacpp provider.
+        Process the response for Llamacpp inference_server.
         """
         generated_text = ""
         ttft = None
@@ -176,7 +190,7 @@ class APITestUser(HttpUser):
 
     def _process_vLLM_response(self, response):
         """
-        Process the response for vLLM provider
+        Process the response for vLLM inference_server
         """
         generated_text = ""
         ttft = None
@@ -198,6 +212,32 @@ class APITestUser(HttpUser):
                 except (json.JSONDecodeError, KeyError) as e:
                     print("Failed to extract decoded text from JSON")
                     
+        return generated_text, ttft
+    
+    def _process_NIMS_response(self, response):
+        """
+        Process the response for NIMS inference_server.
+        """
+        generated_text = ""
+        ttft = None
+
+        for i, chunk in enumerate(response.iter_lines()):
+            if chunk and i == 0 and ttft is None:
+                ttft = (time.perf_counter() - start_time)
+                logging.info(f"TTFT: {ttft*1000:.3f} ms")
+
+            decoded_chunk = chunk.decode("utf-8")
+
+            if "data:" in decoded_chunk:
+                try:
+                    json_data = decoded_chunk.split("data:")[1]
+                    json_data = json.loads(json_data)
+                    # print(json_data)
+                    token = json_data["choices"][0]["delta"]["content"]
+                    generated_text += token
+                except (json.JSONDecodeError, KeyError):
+                    print("Failed to extract decoded text from JSON")
+
         return generated_text, ttft
 
     @task
@@ -257,7 +297,7 @@ class APITestUser(HttpUser):
             fieldnames = [
                 'request', 'start_time', 'end_time', 'input_tokens',
                 'output_tokens', 'latency(ms)', 'throughput(tokens/second)',
-                'latency_per_token(ms/tokens)', 'TTFT(ms)'
+                'latency_per_token(ms/token)', 'TTFT(ms)'
             ]
             writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
 
@@ -272,7 +312,7 @@ class APITestUser(HttpUser):
                 'output_tokens': output_tokens,
                 'latency(ms)': f"{latency * 1000:.3f}",
                 'throughput(tokens/second)': f"{throughput:.3f}",
-                'latency_per_token(ms/tokens)': f"{latency_per_token:.3f}",
+                'latency_per_token(ms/token)': f"{latency_per_token:.3f}",
                 'TTFT(ms)': f"{ttft * 1000:.3f}"
             })
 

@@ -1,9 +1,10 @@
 import pytest
 from click.testing import CliRunner
 from echoswift.cli import cli
-from pathlib import Path
 import json
-from unittest.mock import patch, Mock, MagicMock
+from unittest.mock import patch, Mock
+import pandas as pd
+from pathlib import Path
 
 @pytest.fixture
 def runner():
@@ -14,7 +15,7 @@ def mock_config_file(tmp_path):
     config = {
         "out_dir": "test_results",
         "base_url": "http://localhost:8000/v1/completions",
-        "provider": "vLLM",
+        "inference_server": "vLLM",
         "model": "meta-llama/Meta-Llama-3-8B",
         "max_requests": 5,
         "user_counts": [3],
@@ -63,13 +64,13 @@ def test_start_command_without_config(runner):
 @patch('echoswift.cli.EchoSwift')
 @patch('echoswift.cli.load_config')
 @patch('echoswift.cli.pd.read_csv')
+@patch('echoswift.cli.pd.concat')
 @patch('echoswift.cli.tabulate')
-def test_start_command_with_config(mock_tabulate, mock_read_csv, mock_load_config, mock_echoswift, mock_path, runner, mock_config_file):
-    # Mock the config loading
+def test_start_command_with_config(mock_tabulate, mock_concat, mock_read_csv, mock_load_config, mock_echoswift, mock_path, runner, mock_config_file):
     mock_config = {
         "out_dir": "test_results",
         "base_url": "http://localhost:8000/v1/completions",
-        "provider": "vLLM",
+        "inference_server": "vLLM",
         "model": "meta-llama/Meta-Llama-3-8B",
         "max_requests": 5,
         "user_counts": [3],
@@ -78,16 +79,22 @@ def test_start_command_with_config(mock_tabulate, mock_read_csv, mock_load_confi
     }
     mock_load_config.return_value = mock_config
 
-    # Mock the dataset directory to exist and have files
     mock_path.return_value.exists.return_value = True
     mock_path.return_value.iterdir.return_value = [Mock()]
     
     mock_benchmark_instance = mock_echoswift.return_value
 
-    # Mock DataFrame and tabulate
-    mock_df = MagicMock()
-    mock_df.round.return_value = mock_df
+    mock_df = pd.DataFrame({
+        'Users': [3],
+        'Input Tokens': [32],
+        'output tokens': [256],
+        'throughput(tokens/second)': [100],
+        'latency(ms)': [50],
+        'TTFT(ms)': [10],
+        'latency_per_token(ms/token)': [0.2]
+    })
     mock_read_csv.return_value = mock_df
+    mock_concat.return_value = mock_df
 
     with runner.isolated_filesystem():
         result = runner.invoke(cli, ['start', '--config', mock_config_file])
@@ -96,7 +103,7 @@ def test_start_command_with_config(mock_tabulate, mock_read_csv, mock_load_confi
     mock_echoswift.assert_called_once_with(
         output_dir=mock_config['out_dir'],
         api_url=mock_config['base_url'],
-        provider=mock_config['provider'],
+        inference_server=mock_config['inference_server'],
         model_name=mock_config['model'],
         max_requests=mock_config['max_requests'],
         user_counts=mock_config['user_counts'],
@@ -106,6 +113,7 @@ def test_start_command_with_config(mock_tabulate, mock_read_csv, mock_load_confi
     )
     mock_benchmark_instance.run_benchmark.assert_called_once()
     mock_read_csv.assert_called()
+    mock_concat.assert_called()
     mock_tabulate.assert_called()
 
 @patch('echoswift.cli.Path')
@@ -114,7 +122,7 @@ def test_start_command_without_dataset(mock_load_config, mock_path, runner, mock
     mock_config = {
         "out_dir": "test_results",
         "base_url": "http://localhost:8000/v1/completions",
-        "provider": "vLLM",
+        "inference_server": "vLLM",
         "model": "meta-llama/Meta-Llama-3-8B",
         "max_requests": 5,
         "user_counts": [3],
