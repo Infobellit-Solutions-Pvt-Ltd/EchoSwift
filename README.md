@@ -13,6 +13,13 @@ EchoSwift is a powerful and flexible tool designed for benchmarking Large Langua
 - Easy-to-use CLI interface
 - Detailed logging and progress tracking
 
+## Supported Inference Servers
+  - TGI
+  - vLLM
+  - Ollama
+  - Llamacpp
+  - NIMS
+    
 ## Performance metrics:
 
 The performance metrics captured for varying input and output tokens and parallel users while running the benchmark includes 
@@ -22,12 +29,6 @@ The performance metrics captured for varying input and output tokens and paralle
 
 ![metrics](images/metric.png)
 
-## Supported Inference Servers
-  - TGI
-  - vLLM
-  - Ollama
-  - Llamacpp
-  - NIMS
 ## Installation
 
 You can install EchoSwift using pip:
