@@ -208,7 +208,6 @@ class APITestUser(HttpUser):
                     json_data = json.loads(json_data)
                     token = json_data["choices"][0]["text"]
                     generated_text += token
-                    #print(token,end="",flush=True)
                 except (json.JSONDecodeError, KeyError) as e:
                     print("Failed to extract decoded text from JSON")
                     
@@ -227,12 +226,13 @@ class APITestUser(HttpUser):
                 logging.info(f"TTFT: {ttft*1000:.3f} ms")
 
             decoded_chunk = chunk.decode("utf-8")
-
-            if "data:" in decoded_chunk:
+            if decoded_chunk == "data: [DONE]":
+                    break
+            
+            if "data:" in decoded_chunk and i!=0:
                 try:
                     json_data = decoded_chunk.split("data:")[1]
                     json_data = json.loads(json_data)
-                    # print(json_data)
                     token = json_data["choices"][0]["delta"]["content"]
                     generated_text += token
                 except (json.JSONDecodeError, KeyError):
