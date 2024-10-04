@@ -66,7 +66,7 @@ Modify the `config.json` file in the project root directory. Here's an example c
   "_comment": "EchoSwift Configuration",
   "out_dir": "test_results",
   "base_url": "http://10.216.178.15:8000/v1/completions",
-  "provider": "vLLM",
+  "inference_server": "vLLM",
   "model": "meta-llama/Meta-Llama-3-8B",
   "max_requests": 5,
   "user_counts": [3],
