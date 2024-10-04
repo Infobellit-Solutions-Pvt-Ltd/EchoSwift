@@ -2,9 +2,9 @@ name: EchoSwift CI/CD
 
 on:
   push:
-    branches: [ akhil ]
+    branches: [ main ]
   pull_request:
-    branches: [ akhil ]
+    branches: [ main ]
   release:
     types: [published]
 
