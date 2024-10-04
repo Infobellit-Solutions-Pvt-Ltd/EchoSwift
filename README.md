@@ -40,7 +40,7 @@ pip install echoswift
 Alternatively, you can install from source:
 
 ```bash
-git clone --branch akhil https://github.com/Infobellit-Solutions-Pvt-Ltd/EchoSwift.git
+git clone https://github.com/Infobellit-Solutions-Pvt-Ltd/EchoSwift.git
 cd EchoSwift
 pip install -e .
 ```
