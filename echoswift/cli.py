@@ -120,8 +120,10 @@ def start(config):
             
             # Sort the DataFrame
             combined_df = combined_df.sort_values(['Users', 'Input Tokens', 'output tokens'])
-            print()
+
             click.echo(tabulate(combined_df, headers='keys', tablefmt='pretty', showindex=False))
+
+            click.echo("Tests completed successfully !!")
                         
     except Exception as e:
         error_msg = f"An error occurred while running the benchmark: {str(e)}"
