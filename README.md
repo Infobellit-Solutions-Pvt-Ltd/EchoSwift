@@ -126,6 +126,7 @@ If you find our resource useful, please cite our paper:
   collection = {ICPE '24}
 }
 ```
+### Refer [AMD_BUILD_GUIDE](https://www.amd.com/content/dam/amd/en/documents/epyc-technical-docs/user-guides/58669-amd-epyc-9004-ug-openshift.pdf) for detailed steps on LLM deployment on Red Hat Openshift Container Platform.
 
 ## Support
 
