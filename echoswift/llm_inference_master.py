@@ -38,6 +38,7 @@ class APITestUser(HttpUser):
         self.output_file_path = os.environ.get('OUTPUT_FILE', 'output.csv')
         self.inference_server = os.environ.get('INFERENCE_SERVER', " ")
         self.model_name = os.environ.get('MODEL_NAME', " ")
+        self.use_random_query = os.environ.get('USE_RANDOM_QUERY', "False")
 
     @staticmethod
     def load_dataset(csv_file):
@@ -73,13 +74,22 @@ class APITestUser(HttpUser):
             data = {"prompt": prompt, "n_predict": self.max_new_tokens, "stream": True}
 
         elif self.inference_server == "vLLM":
-            data = {
-                "model": self.model_name,
-                "prompt": prompt,
-                "max_tokens": self.max_new_tokens,
-                "min_tokens": self.max_new_tokens,
-                "stream": True
-            }
+            if self.use_random_query == "True":
+                data = {
+                    "model": self.model_name,
+                    "prompt": prompt,
+                    "max_tokens": 1024,
+                    "min_tokens": 3,
+                    "stream": True,
+                }
+            else:
+                data = {
+                    "model": self.model_name,
+                    "prompt": prompt,
+                    "max_tokens": self.max_new_tokens,
+                    "min_tokens": self.max_new_tokens,
+                    "stream": True
+                }
 
         elif self.inference_server == "NIMS":
             data={

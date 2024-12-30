@@ -3,30 +3,50 @@ import matplotlib.pyplot as plt
 import numpy as np
 from pathlib import Path
 
-def process_csv_files(directory_path):
+def process_csv_files(directory_path, use_random_query):
     user_number = int(''.join(filter(str.isdigit, directory_path.name)))
     data = {}
 
-    csv_files = sorted(directory_path.glob('avg_*_input_tokens.csv'), 
-                       key=lambda x: int(''.join(filter(str.isdigit, x.stem))))
-    
-    for csv_file in csv_files:
-        df = pd.read_csv(csv_file)
-        for _, row in df.iterrows():
-            output_token = row['output tokens']
-            token_latency = row['latency_per_token(ms/token)']
-            throughput = row['throughput(tokens/second)']
-            ttft = row['TTFT(ms)']
-            data.setdefault(user_number, []).append((output_token, token_latency, throughput, ttft))
+    if use_random_query==True:
+        csv_files = sorted(directory_path.glob('avg_Response.csv'))
+
+        for csv_file in csv_files:
+            df = pd.read_csv(csv_file)
+            for _, row in df.iterrows():
+                input_tokens = row['input_tokens']
+                output_token = row['output_tokens']
+                token_latency = row['latency_per_token(ms/token)']
+                throughput = row['throughput(tokens/second)']
+                ttft = row['TTFT(ms)']
+                data.setdefault(user_number, []).append((input_tokens, output_token, token_latency, throughput, ttft))
+                
+    else:
+        csv_files = sorted(directory_path.glob('avg_*_input_tokens.csv'), 
+                            key=lambda x: int(''.join(filter(str.isdigit, x.stem))))
+        
+        for csv_file in csv_files:
+            df = pd.read_csv(csv_file)
+            for _, row in df.iterrows():
+                output_token = row['output tokens']
+                token_latency = row['latency_per_token(ms/token)']
+                throughput = row['throughput(tokens/second)']
+                ttft = row['TTFT(ms)']
+                data.setdefault(user_number, []).append((output_token, token_latency, throughput, ttft))
 
     return data
 
-def write_to_csv(data, output_file):
-    with open(output_file, 'w') as f:
-        f.write('Number of Parallel Requests,Output Token,Token Latency (ms/token),Throughput (tokens/second),TTFT (ms)\n')
-        for num_Requests, values in sorted(data.items()):
-            for value in values:
-                f.write(f'{num_Requests},{value[0]},{value[1]},{value[2]},{value[3]}\n')
+def write_to_csv(data, output_file, use_random_query):
+    with open(output_file, 'w') as f:   
+        if use_random_query==True:
+            f.write('Number of Parallel Requests,Input Token(avg), Output Token(avg),Token Latency (ms/token),Throughput (tokens/second),TTFT (ms)\n')
+            for num_Requests, values in sorted(data.items()):
+                for value in values:
+                    f.write(f'{num_Requests},{value[0]},{value[1]},{value[2]},{value[3]},{value[4]}\n')
+        else:
+            f.write('Number of Parallel Requests,Output Token,Token Latency (ms/token),Throughput (tokens/second),TTFT (ms)\n')
+            for num_Requests, values in sorted(data.items()):
+                for value in values:
+                    f.write(f'{num_Requests},{value[0]},{value[1]},{value[2]},{value[3]}\n')
 
 def plot_line_chart(data, x_label, y_label, title, output_file):
     plt.figure(figsize=(10, 6))
@@ -54,18 +74,18 @@ def plot_line_chart(data, x_label, y_label, title, output_file):
     plt.savefig(output_file)
     plt.close()
 
-def plot_benchmark_results(base_directory):
+def plot_benchmark_results(base_directory, use_random_query=False):
     base_directory = Path(base_directory)
     output_file = base_directory / 'aggregated_data.csv'
     
     data = {}
     for directory in base_directory.iterdir():
         if directory.is_dir() and "_User" in directory.name:
-            directory_data = process_csv_files(directory)
+            directory_data = process_csv_files(directory, use_random_query)
             for num_Requests, values in directory_data.items():
-                data.setdefault(num_Requests, []).extend(values)
+                data.setdefault(num_Requests, []).extend(values)   
 
-    write_to_csv(data, output_file)
+    write_to_csv(data, output_file, use_random_query)
     print(f"Aggregated data has been written to {output_file}")
 
     df = pd.read_csv(output_file)
@@ -89,5 +109,6 @@ if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser(description='Process CSV files and generate plots.')
     parser.add_argument('base_directory', type=str, help='The base directory containing the result directories.')
+    parser.add_argument('--use_random_query', action='store_true', help='Use random query (default: False)')
     args = parser.parse_args()
-    plot_benchmark_results(args.base_directory)
+    plot_benchmark_results(args.base_directory, args.use_random_query)

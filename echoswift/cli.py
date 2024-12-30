@@ -42,7 +42,8 @@ def create_config(output='config.json'):
         "max_requests": 5,
         "user_counts": [3],
         "input_tokens": [32],
-        "output_tokens": [256]
+        "output_tokens": [256],
+        "use_random_query": False  # Default value for the flag
     }
 
     output_path = Path(output)
@@ -87,43 +88,83 @@ def start(config):
     logging.info("Using Filtered_ShareGPT_Dataset for the benchmark.")
     
     try:
-        benchmark = EchoSwift(
-            output_dir=cfg['out_dir'],
-            api_url=cfg['base_url'],
-            inference_server=cfg['inference_server'],
-            model_name=cfg.get('model'),
-            max_requests=cfg['max_requests'],
-            user_counts=cfg['user_counts'],
-            input_tokens=cfg['input_tokens'],
-            output_tokens=cfg['output_tokens'],
-            dataset_dir=str(dataset_dir)
-        )
-        
-        benchmark.run_benchmark()
-        
-        # Pretty print results after each user count completes
-        all_results = []
-        for u in cfg['user_counts']:
-            user_dir = Path(cfg['out_dir']) / f"{u}_User"
-            for input_token in cfg['input_tokens']:
-                avg_file = user_dir / f"avg_{input_token}_input_tokens.csv"
+        if cfg.get('use_random_query', True):
+            # Use random queries from Dataset.csv
+            benchmark = EchoSwift(
+                output_dir=cfg['out_dir'],
+                api_url=cfg['base_url'],
+                inference_server=cfg['inference_server'],
+                model_name=cfg.get('model'),
+                max_requests=cfg['max_requests'],
+                user_counts=cfg['user_counts'],
+                dataset_dir=str(dataset_dir),
+                use_random_query=cfg['use_random_query']
+            )
+
+            benchmark.run_benchmark()
+
+            # Pretty print results after each user count completes
+            all_results = []
+            for u in cfg['user_counts']:
+                user_dir = Path(cfg['out_dir']) / f"{u}_User"
+                avg_file = user_dir / "avg_Response.csv"
                 if avg_file.exists():
                     df = pd.read_csv(avg_file)
                     df['Users'] = u
-                    df['Input Tokens'] = input_token
                     all_results.append(df)
 
-        if all_results:
-            combined_df = pd.concat(all_results, ignore_index=True)
-            combined_df = combined_df[['Users', 'Input Tokens', 'output tokens', 'throughput(tokens/second)', 'latency(ms)', 'TTFT(ms)', 'latency_per_token(ms/token)']]
-            combined_df = combined_df.round(3)
+            if all_results:
+                combined_df = pd.concat(all_results, ignore_index=True)
+                combined_df = combined_df[['Users', 'Input Tokens', 'output tokens', 'throughput(tokens/second)', 'latency(ms)', 'TTFT(ms)', 'latency_per_token(ms/token)']]
+                combined_df = combined_df.round(3)
+                
+                # Sort the DataFrame
+                combined_df = combined_df.sort_values(['Users', 'Input Tokens', 'output tokens'])
+
+                click.echo(tabulate(combined_df, headers='keys', tablefmt='pretty', showindex=False))
+
+                click.echo("Tests completed successfully !!")
+
+
+        else:
+            # Use all parameters from the config
+            benchmark = EchoSwift(
+                output_dir=cfg['out_dir'],
+                api_url=cfg['base_url'],
+                inference_server=cfg['inference_server'],
+                model_name=cfg.get('model'),
+                max_requests=cfg['max_requests'],
+                user_counts=cfg['user_counts'],
+                input_tokens=cfg['input_tokens'],
+                output_tokens=cfg['output_tokens'],
+                dataset_dir=str(dataset_dir)
+            )
+        
+            benchmark.run_benchmark()
             
-            # Sort the DataFrame
-            combined_df = combined_df.sort_values(['Users', 'Input Tokens', 'output tokens'])
+            # Pretty print results after each user count completes
+            all_results = []
+            for u in cfg['user_counts']:
+                user_dir = Path(cfg['out_dir']) / f"{u}_User"
+                for input_token in cfg['input_tokens']:
+                    avg_file = user_dir / f"avg_{input_token}_input_tokens.csv"
+                    if avg_file.exists():
+                        df = pd.read_csv(avg_file)
+                        df['Users'] = u
+                        df['Input Tokens'] = input_token
+                        all_results.append(df)
 
-            click.echo(tabulate(combined_df, headers='keys', tablefmt='pretty', showindex=False))
+            if all_results:
+                combined_df = pd.concat(all_results, ignore_index=True)
+                combined_df = combined_df[['Users', 'Input Tokens', 'output tokens', 'throughput(tokens/second)', 'latency(ms)', 'TTFT(ms)', 'latency_per_token(ms/token)']]
+                combined_df = combined_df.round(3)
+                
+                # Sort the DataFrame
+                combined_df = combined_df.sort_values(['Users', 'Input Tokens', 'output tokens'])
 
-            click.echo("Tests completed successfully !!")
+                click.echo(tabulate(combined_df, headers='keys', tablefmt='pretty', showindex=False))
+
+                click.echo("Tests completed successfully !!")
                         
     except Exception as e:
         error_msg = f"An error occurred while running the benchmark: {str(e)}"
@@ -133,14 +174,15 @@ def start(config):
 
 @cli.command()
 @click.option('--results-dir', required=True, type=click.Path(exists=True), help='Directory containing benchmark results')
-def plot(results_dir):
+@click.option('--use-random-query', is_flag=True, help='Use random query for benchmarking')
+def plot(results_dir, use_random_query=False):
     """Plot graphs using benchmark results"""
     results_path = Path(results_dir)
     if not results_path.is_dir():
         raise click.BadParameter("The specified results directory is not a directory.")
     
     try:
-        plot_benchmark_results(results_path)
+        plot_benchmark_results(results_path, use_random_query)
         click.echo(f"Plots have been generated and saved in {results_path}")
     except Exception as e:
         click.echo(f"An error occurred while plotting results: {e}", err=True)
