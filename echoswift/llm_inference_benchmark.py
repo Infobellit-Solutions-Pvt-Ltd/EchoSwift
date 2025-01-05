@@ -45,7 +45,7 @@ class EchoSwift:
                 logging.info(f"Running Locust with users={u}")
                 self._run_locust(u, output_file=user_file, logs_dir=locust_logs_dir)
 
-            self._calculate_average(user_dir)
+                self._calculate_average(user_dir=user_dir, use_random_query=self.use_random_query)
 
         else:
             logging.info("Using custom queries from Input_Dataset")
@@ -186,7 +186,7 @@ class EchoSwift:
             if process.returncode != 0 and process.returncode != -signal.SIGTERM.value:
                 logging.error(f"Locust command failed with return code {process.returncode}. Check the log file: {log_file_path}")
 
-    def _calculate_average(self, user_dir: Path, input_token: int = None):
+    def _calculate_average(self, user_dir: Path, input_token: int = None, use_random_query: bool = False):
 
         if self.use_random_query==True:
             input_file=user_dir / "Response.csv"
@@ -198,7 +198,7 @@ class EchoSwift:
                 avg_script,
                 "--input_csv_filename", str(input_file),
                 "--output_csv_filename", str(output_file),
-                "--use_random_query", "True",
+                "--use_random_query"
                 ]
             
             try:
