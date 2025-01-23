@@ -61,20 +61,22 @@ class APITestUser(HttpUser):
         """
         prompt = random.choice(self.questions)
 
-        if self.inference_server == "TGI":
-            data = {'inputs': prompt, 'parameters': {'max_new_tokens': self.max_new_tokens}}
-        elif self.inference_server == "Ollama":
-            data = {
-                "model": self.model_name, 
-                "prompt": prompt, 
-                "stream": True, 
-                "options": {"num_predict": self.max_new_tokens}
-            }
-        elif self.inference_server == "Llamacpp":
-            data = {"prompt": prompt, "n_predict": self.max_new_tokens, "stream": True}
-
-        elif self.inference_server == "vLLM":
-            if self.use_random_query == "True":
+        if self.use_random_query == "True":
+            if self.inference_server == "TGI":
+                data = {'inputs': prompt, 'parameters': {'max_new_tokens': random.randint(3, 1024)}}
+            
+            elif self.inference_server == "Ollama":
+                data = {
+                    "model": self.model_name, 
+                    "prompt": prompt, 
+                    "stream": True, 
+                    "options": {"num_predict": random.randint(3, 1024)}
+                }
+        
+            elif self.inference_server == "Llamacpp":
+                data = {"prompt": prompt, "n_predict": random.randint(3, 1024), "stream": True}
+            
+            elif self.inference_server == "vLLM":
                 data = {
                     "model": self.model_name,
                     "prompt": prompt,
@@ -82,7 +84,36 @@ class APITestUser(HttpUser):
                     "min_tokens": 3,
                     "stream": True,
                 }
-            else:
+            
+            elif self.inference_server == "NIMS":
+                data = {
+                    "messages": [
+                        {
+                            "content": prompt,
+                            "role": "user"
+                        }
+                    ],
+                    "model": self.model_name,
+                    "max_tokens": random.randint(3, 1024),
+                    "stream": True
+                }
+        
+        else:
+            if self.inference_server == "TGI":
+                data = {'inputs': prompt, 'parameters': {'max_new_tokens': self.max_new_tokens}}
+            
+            elif self.inference_server == "Ollama":
+                data = {
+                    "model": self.model_name, 
+                    "prompt": prompt, 
+                    "stream": True, 
+                    "options": {"num_predict": self.max_new_tokens}
+                }
+            
+            elif self.inference_server == "Llamacpp":
+                data = {"prompt": prompt, "n_predict": self.max_new_tokens, "stream": True}
+
+            elif self.inference_server == "vLLM":
                 data = {
                     "model": self.model_name,
                     "prompt": prompt,
@@ -91,18 +122,18 @@ class APITestUser(HttpUser):
                     "stream": True
                 }
 
-        elif self.inference_server == "NIMS":
-            data={
-                "messages": [
-                    {
-                        "content": prompt,
-                        "role": "user"
-                    }
-                ],
+            elif self.inference_server == "NIMS":
+                data={
+                    "messages": [
+                        {
+                            "content": prompt,
+                            "role": "user"
+                        }
+                    ],
                 "model": self.model_name,
                 "max_tokens": self.max_new_tokens,
                 "stream": True
-            }
+                }
 
         input_tokens = len(tokenizer.encode(prompt))
         return data, input_tokens

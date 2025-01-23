@@ -39,11 +39,11 @@ def create_config(output='config.json'):
         "base_url": "http://10.216.178.15:8000/v1/completions",
         "inference_server": "vLLM",
         "model": "meta-llama/Meta-Llama-3-8B",
+        "use_random_query": False,
         "max_requests": 5,
         "user_counts": [3],
         "input_tokens": [32],
         "output_tokens": [256],
-        "use_random_query": False  # Default value for the flag
     }
 
     output_path = Path(output)
@@ -181,14 +181,21 @@ def start(config):
 
 @cli.command()
 @click.option('--results-dir', required=True, type=click.Path(exists=True), help='Directory containing benchmark results')
-@click.option('--use-random-query', is_flag=True, help='Use random query for benchmarking')
-def plot(results_dir, use_random_query=False):
+def plot(results_dir):
     """Plot graphs using benchmark results"""
     results_path = Path(results_dir)
+    config_path = Path(config)
+    cfg = load_config(config_path)
+
     if not results_path.is_dir():
         raise click.BadParameter("The specified results directory is not a directory.")
     
     try:
+        if cfg.get('use_random_query', True):
+            use_random_query = True
+        else:
+            use_random_query = False
+ 
         plot_benchmark_results(results_path, use_random_query)
         click.echo(f"Plots have been generated and saved in {results_path}")
     except Exception as e:

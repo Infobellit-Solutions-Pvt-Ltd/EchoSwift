@@ -109,6 +109,6 @@ if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser(description='Process CSV files and generate plots.')
     parser.add_argument('base_directory', type=str, help='The base directory containing the result directories.')
-    parser.add_argument('--use_random_query', action='store_true', help='Use random query (default: False)')
+    parser.add_argument('--use_random_query', type=bool, default=False, help='Use random query (default: False)')
     args = parser.parse_args()
     plot_benchmark_results(args.base_directory, args.use_random_query)
