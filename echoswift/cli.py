@@ -60,10 +60,17 @@ def create_config(output='config.json'):
 @click.option('--config', default='config.json', help='Name of the output configuration file')
 def dataprep(config):
     """Download the filtered ShareGPT dataset and create the config.json file"""
-    # Download dataset
-    click.echo("Downloading the filtered ShareGPT dataset...")
-    download_dataset_files("sarthakdwi/EchoSwift-8k")
-    
+    config_path = Path(config)
+    cfg = load_config(config_path)
+
+    if cfg.get('use_random_query', True):
+        # Download dataset
+        click.echo("Downloading the filtered ShareGPT dataset...")
+        download_dataset_files("epsilondelta1982/EchoSwift-20k")
+    else:
+        # Download dataset
+        click.echo("Downloading the filtered ShareGPT dataset...")
+        download_dataset_files("sarthakdwi/EchoSwift-8k")
 
     # Create config
     click.echo("\nCreating configuration file...")
