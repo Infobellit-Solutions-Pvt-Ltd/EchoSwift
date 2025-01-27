@@ -7,6 +7,7 @@ from echoswift.utils.plot_results import plot_benchmark_results
 import logging
 from tabulate import tabulate
 import pandas as pd
+from echoswift.Optimaluser import OptimalUser
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
@@ -26,6 +27,7 @@ def cli():
     1. Run 'echoswift dataprep' to download the dataset and create config.json
     2. Run 'echoswift start --config path/to/config.json' to start the benchmark
     3. Run 'echoswift plot --results-dir path/to/benchmark_results' to generate plots
+    4. Run 'echoswift OptimalUserRun --config path/to/config.json' to find optimal user count
 
     For more detailed information, visit: \n
     https://github.com/Infobellit-Solutions-Pvt-Ltd/EchoSwift
@@ -173,6 +175,32 @@ def start(config):
 
                 click.echo("Tests completed successfully !!")
                         
+    except Exception as e:
+        error_msg = f"An error occurred while running the benchmark: {str(e)}"
+        logging.error(error_msg)
+        click.echo(error_msg, err=True)
+        raise click.Abort()
+
+@cli.command()
+@click.option('--config', required=True, type=click.Path(exists=True), help='Path to the configuration file')
+def OptimalUserRun(config):
+    """Start the EchoSwift benchmark using the specified config file for finding optimal users"""
+    config_path = Path(config)
+    cfg = load_config(config_path)
+    
+    dataset_dir = Path("Input_Dataset")
+    if not dataset_dir.exists() or not any(dataset_dir.iterdir()):
+        error_msg = "Filtered dataset not found. Please run 'echoswift dataprep' before starting the benchmark."
+        logging.error(error_msg)
+        click.echo(error_msg, err=True)
+        raise click.Abort()
+
+    logging.info("Using Filtered_ShareGPT_Dataset for the benchmark.")
+
+    try:
+        OptimalUser(config)
+        click.echo("Tests completed successfully !!")
+    
     except Exception as e:
         error_msg = f"An error occurred while running the benchmark: {str(e)}"
         logging.error(error_msg)

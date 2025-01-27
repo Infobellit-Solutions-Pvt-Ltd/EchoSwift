@@ -2,6 +2,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
 from pathlib import Path
+import argparse
 
 def process_csv_files(directory_path, use_random_query):
     user_number = int(''.join(filter(str.isdigit, directory_path.name)))
@@ -106,7 +107,6 @@ def plot_benchmark_results(base_directory, use_random_query=False):
                     base_directory / 'ttft_plot.png')
 
 if __name__ == "__main__":
-    import argparse
     parser = argparse.ArgumentParser(description='Process CSV files and generate plots.')
     parser.add_argument('base_directory', type=str, help='The base directory containing the result directories.')
     parser.add_argument('--use_random_query', type=bool, default=False, help='Use random query (default: False)')
