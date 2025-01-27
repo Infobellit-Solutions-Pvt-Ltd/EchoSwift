@@ -31,22 +31,24 @@ def dataset_exists(output_dir: Path, files: list) -> bool:
 
 def download_dataset_files(repo_id: str, output_dir: Path = Path("Input_Dataset")) -> None:
     """Download dataset files if they don't already exist."""
-    try:
+    try:       
+        output_dir.mkdir(parents=True, exist_ok=True)
         files = get_dataset_files(repo_id)
-        
+
         if not files:
             print(f"No compatible files found in the repository: {repo_id}")
             return
-
-        output_dir.mkdir(parents=True, exist_ok=True)
         
+        repo_name = repo_id.split('/')[-1]  # Extract the repo name
+        (output_dir / repo_name).mkdir(parents=True, exist_ok=True)  # Create directory if it doesn't exist
+
         if dataset_exists(output_dir, files):
             print(f"Dataset already exists in '{output_dir.resolve()}'. Skipping download.")
             return
 
         for file in files:
             url = f"https://huggingface.co/datasets/{repo_id}/resolve/main/{file}"
-            local_filename = output_dir / Path(file).name
+            local_filename = output_dir/ repo_name / Path(file).name
             try:
                 download_file(url, local_filename)
             except Exception as e:

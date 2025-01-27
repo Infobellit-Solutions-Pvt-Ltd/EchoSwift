@@ -4,11 +4,11 @@ import numpy as np
 from pathlib import Path
 import argparse
 
-def process_csv_files(directory_path, use_random_query):
+def process_csv_files(directory_path, random_prompt):
     user_number = int(''.join(filter(str.isdigit, directory_path.name)))
     data = {}
 
-    if use_random_query==True:
+    if random_prompt==True:
         csv_files = sorted(directory_path.glob('avg_Response.csv'))
 
         for csv_file in csv_files:
@@ -36,9 +36,9 @@ def process_csv_files(directory_path, use_random_query):
 
     return data
 
-def write_to_csv(data, output_file, use_random_query):
+def write_to_csv(data, output_file, random_prompt):
     with open(output_file, 'w') as f:   
-        if use_random_query==True:
+        if random_prompt==True:
             f.write('Number of Parallel Requests,Input Token(avg), Output Token(avg),Token Latency (ms/token),Throughput (tokens/second),TTFT (ms)\n')
             for num_Requests, values in sorted(data.items()):
                 for value in values:
@@ -75,18 +75,18 @@ def plot_line_chart(data, x_label, y_label, title, output_file):
     plt.savefig(output_file)
     plt.close()
 
-def plot_benchmark_results(base_directory, use_random_query=False):
+def plot_benchmark_results(base_directory, random_prompt=False):
     base_directory = Path(base_directory)
     output_file = base_directory / 'aggregated_data.csv'
     
     data = {}
     for directory in base_directory.iterdir():
         if directory.is_dir() and "_User" in directory.name:
-            directory_data = process_csv_files(directory, use_random_query)
+            directory_data = process_csv_files(directory, random_prompt)
             for num_Requests, values in directory_data.items():
                 data.setdefault(num_Requests, []).extend(values)   
 
-    write_to_csv(data, output_file, use_random_query)
+    write_to_csv(data, output_file, random_prompt)
     print(f"Aggregated data has been written to {output_file}")
 
     df = pd.read_csv(output_file)
@@ -109,6 +109,6 @@ def plot_benchmark_results(base_directory, use_random_query=False):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Process CSV files and generate plots.')
     parser.add_argument('base_directory', type=str, help='The base directory containing the result directories.')
-    parser.add_argument('--use_random_query', type=bool, default=False, help='Use random query (default: False)')
+    parser.add_argument('--random_prompt', type=bool, default=False, help='Use random prompts (default: False)')
     args = parser.parse_args()
-    plot_benchmark_results(args.base_directory, args.use_random_query)
+    plot_benchmark_results(args.base_directory, args.random_prompt)

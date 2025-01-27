@@ -28,9 +28,9 @@ def calculate_average(rows: List[List[str]], column_indices: List[int], start: i
         logging.error(f"Error calculating average: {str(e)}. Check if all values are numeric.")
         return [None] * len(column_indices)
 
-def calculate_averages(input_csv_filename: str, output_csv_filename: str, tokens: List[int], use_random_query: bool = False):
+def calculate_averages(input_csv_filename: str, output_csv_filename: str, tokens: List[int], random_prompt: bool = False):
     
-    if use_random_query==True:
+    if random_prompt==True:
         column_names = ["input_tokens", "output_tokens", "throughput(tokens/second)", "latency(ms)", "TTFT(ms)", "latency_per_token(ms/token)"]
         rows = read_csv(input_csv_filename)
 
@@ -116,10 +116,10 @@ if __name__ == '__main__':
     parser.add_argument('--input_csv_filename', required=True, help='Input CSV file path')
     parser.add_argument('--output_csv_filename', required=True, help='Output CSV file path')
     parser.add_argument('--tokens', nargs='+', type=int, default=None, help='List of different output_tokens')
-    parser.add_argument('--use_random_query', action='store_true', help='Use random query (default: False)')
+    parser.add_argument('--random_prompt', action='store_true', help='Use random prompts (default: False)')
     args = parser.parse_args()
 
-    calculate_averages(args.input_csv_filename, args.output_csv_filename, args.tokens, args.use_random_query)
+    calculate_averages(args.input_csv_filename, args.output_csv_filename, args.tokens, args.random_prompt)
 
 # Example command to run this file:
 # python3 avg_locust_results.py --input_csv_filename "Results_vLLM_Llama3_8b_32in_256out/100_User/32_input_tokens.csv" --output_csv_filename "Results_vLLM_Llama3_8b_32in_256out/100_User/avg_32_input_tokens.csv" --tokens 256

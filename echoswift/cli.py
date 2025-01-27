@@ -27,7 +27,7 @@ def cli():
     1. Run 'echoswift dataprep' to download the dataset and create config.json
     2. Run 'echoswift start --config path/to/config.json' to start the benchmark
     3. Run 'echoswift plot --results-dir path/to/benchmark_results' to generate plots
-    4. Run 'echoswift OptimalUserRun --config path/to/config.json' to find optimal user count
+    4. Run 'echoswift optimaluserrun --config path/to/config.json' to find optimal user count
 
     For more detailed information, visit: \n
     https://github.com/Infobellit-Solutions-Pvt-Ltd/EchoSwift
@@ -41,7 +41,7 @@ def create_config(output='config.json'):
         "base_url": "http://10.216.178.15:8000/v1/completions",
         "inference_server": "vLLM",
         "model": "meta-llama/Meta-Llama-3-8B",
-        "use_random_query": False,
+        "random_prompt": False,
         "max_requests": 5,
         "user_counts": [3],
         "input_tokens": [32],
@@ -50,7 +50,7 @@ def create_config(output='config.json'):
 
     output_path = Path(output)
     if output_path.exists():
-        click.confirm(f"The file {output} already exists. Do you want to overwrite it?", abort=True)
+        click.echo(f"The file {output} already exists. please validate the config file.")
 
     with open(output_path, 'w') as f:
         json.dump(config, f, indent=2)
@@ -65,14 +65,9 @@ def dataprep(config):
     config_path = Path(config)
     cfg = load_config(config_path)
 
-    if cfg.get('use_random_query', True):
-        # Download dataset
-        click.echo("Downloading the filtered ShareGPT dataset...")
-        download_dataset_files("epsilondelta1982/EchoSwift-20k")
-    else:
-        # Download dataset
-        click.echo("Downloading the filtered ShareGPT dataset...")
-        download_dataset_files("sarthakdwi/EchoSwift-8k")
+    click.echo("Downloading the filtered ShareGPT dataset...")
+    download_dataset_files("epsilondelta1982/EchoSwift-20k")
+    download_dataset_files("sarthakdwi/EchoSwift-8k")
 
     # Create config
     click.echo("\nCreating configuration file...")
@@ -97,7 +92,7 @@ def start(config):
     logging.info("Using Filtered_ShareGPT_Dataset for the benchmark.")
     
     try:
-        if cfg.get('use_random_query', True):
+        if cfg.get('random_prompt', True):
             # Use random queries from Dataset.csv
             benchmark = EchoSwift(
                 output_dir=cfg['out_dir'],
@@ -106,8 +101,8 @@ def start(config):
                 model_name=cfg.get('model'),
                 max_requests=cfg['max_requests'],
                 user_counts=cfg['user_counts'],
-                dataset_dir=str(dataset_dir),
-                use_random_query=cfg['use_random_query']
+                dataset_dir=str(dataset_dir)/"EchoSwift-20k",
+                random_prompt=cfg['random_prompt']
             )
 
             benchmark.run_benchmark()
@@ -146,7 +141,7 @@ def start(config):
                 user_counts=cfg['user_counts'],
                 input_tokens=cfg['input_tokens'],
                 output_tokens=cfg['output_tokens'],
-                dataset_dir=str(dataset_dir)
+                dataset_dir=str(dataset_dir) / "EchoSwift-8k"
             )
         
             benchmark.run_benchmark()
@@ -183,12 +178,12 @@ def start(config):
 
 @cli.command()
 @click.option('--config', required=True, type=click.Path(exists=True), help='Path to the configuration file')
-def OptimalUserRun(config):
+def optimaluserrun(config):
     """Start the EchoSwift benchmark using the specified config file for finding optimal users"""
     config_path = Path(config)
     cfg = load_config(config_path)
     
-    dataset_dir = Path("Input_Dataset")
+    dataset_dir = Path("Input_Dataset") 
     if not dataset_dir.exists() or not any(dataset_dir.iterdir()):
         error_msg = "Filtered dataset not found. Please run 'echoswift dataprep' before starting the benchmark."
         logging.error(error_msg)
@@ -219,12 +214,12 @@ def plot(results_dir):
         raise click.BadParameter("The specified results directory is not a directory.")
     
     try:
-        if cfg.get('use_random_query', True):
-            use_random_query = True
+        if cfg.get('random_prompt', True):
+            random_prompt = True
         else:
-            use_random_query = False
+            random_prompt = False
  
-        plot_benchmark_results(results_path, use_random_query)
+        plot_benchmark_results(results_path, random_prompt)
         click.echo(f"Plots have been generated and saved in {results_path}")
     except Exception as e:
         click.echo(f"An error occurred while plotting results: {e}", err=True)
