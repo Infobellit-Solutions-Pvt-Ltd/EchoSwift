@@ -7,7 +7,7 @@ from echoswift.utils.plot_results import plot_benchmark_results
 import logging
 from tabulate import tabulate
 import pandas as pd
-from echoswift.Optimaluser import OptimalUser
+from echoswift.optimaluser import OptimalUser
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
@@ -92,7 +92,7 @@ def start(config):
     logging.info("Using Filtered_ShareGPT_Dataset for the benchmark.")
     
     try:
-        if cfg.get('random_prompt', True):
+        if cfg.get('random_prompt'):
             # Use random queries from Dataset.csv
             benchmark = EchoSwift(
                 output_dir=cfg['out_dir'],
@@ -204,7 +204,7 @@ def optimaluserrun(config):
 
 @cli.command()
 @click.option('--results-dir', required=True, type=click.Path(exists=True), help='Directory containing benchmark results')
-def plot(results_dir):
+def plot(results_dir, config="config.json"):
     """Plot graphs using benchmark results"""
     results_path = Path(results_dir)
     config_path = Path(config)
@@ -214,7 +214,7 @@ def plot(results_dir):
         raise click.BadParameter("The specified results directory is not a directory.")
     
     try:
-        if cfg.get('random_prompt', True):
+        if cfg.get('random_prompt'):
             random_prompt = True
         else:
             random_prompt = False
