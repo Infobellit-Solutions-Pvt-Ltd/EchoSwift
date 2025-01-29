@@ -82,7 +82,7 @@ class EchoSwift:
                 "INFERENCE_SERVER": self.inference_server,
                 "INPUT_DATASET": str(self.dataset_dir / "Dataset.csv"),
                 "OUTPUT_FILE": str(output_file),
-                "random_prompt": "True"
+                "RANDOM_PROMPT": "True"
             })
 
             locust_file = pkg_resources.resource_filename('echoswift', 'llm_inference_master.py')
