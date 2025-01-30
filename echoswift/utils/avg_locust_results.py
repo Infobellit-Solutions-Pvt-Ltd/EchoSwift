@@ -94,7 +94,7 @@ def calculate_averages(input_csv_filename: str, output_csv_filename: str, tokens
         try:
             with open(output_csv_filename, mode='w', newline="") as file:
                 writer = csv.writer(file)
-                writer.writerow(["output tokens"] + column_names)
+                writer.writerow(["output_tokens"] + column_names)
 
                 for i in range(len(empty_line_indices)):
                     start_index = 1 if i == 0 else empty_line_indices[i - 1] + 1

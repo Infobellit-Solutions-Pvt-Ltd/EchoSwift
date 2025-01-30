@@ -28,7 +28,7 @@ def process_csv_files(directory_path, random_prompt):
         for csv_file in csv_files:
             df = pd.read_csv(csv_file)
             for _, row in df.iterrows():
-                output_token = row['output tokens']
+                output_token = row['output_tokens']
                 token_latency = row['latency_per_token(ms/token)']
                 throughput = row['throughput(tokens/second)']
                 ttft = row['TTFT(ms)']

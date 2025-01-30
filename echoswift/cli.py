@@ -41,7 +41,7 @@ def create_config(output='config.json'):
         "base_url": "http://10.216.178.15:8000/v1/completions",
         "inference_server": "vLLM",
         "model": "meta-llama/Meta-Llama-3-8B",
-        "random_prompt": False,
+        "random_prompt": false,
         "max_requests": 5,
         "user_counts": [3],
         "input_tokens": [32],
@@ -82,13 +82,15 @@ def start(config):
     config_path = Path(config)
     cfg = load_config(config_path)
     
+    
     dataset_dir = Path("Input_Dataset")
+    
     if not dataset_dir.exists() or not any(dataset_dir.iterdir()):
         error_msg = "Filtered dataset not found. Please run 'echoswift dataprep' before starting the benchmark."
         logging.error(error_msg)
         click.echo(error_msg, err=True)
         raise click.Abort()
-
+    
     logging.info("Using Filtered_ShareGPT_Dataset for the benchmark.")
     
     try:
@@ -101,7 +103,7 @@ def start(config):
                 model_name=cfg.get('model'),
                 max_requests=cfg['max_requests'],
                 user_counts=cfg['user_counts'],
-                dataset_dir=str(dataset_dir)/"EchoSwift-20k",
+                dataset_dir=str(dataset_dir) +"/"+ "EchoSwift-20k",
                 random_prompt=cfg['random_prompt']
             )
 
@@ -114,16 +116,16 @@ def start(config):
                 avg_file = user_dir / "avg_Response.csv"
                 if avg_file.exists():
                     df = pd.read_csv(avg_file)
-                    df['Users'] = u
+                    df['users'] = u
                     all_results.append(df)
 
             if all_results:
                 combined_df = pd.concat(all_results, ignore_index=True)
-                combined_df = combined_df[['Users', 'Input Tokens', 'output tokens', 'throughput(tokens/second)', 'latency(ms)', 'TTFT(ms)', 'latency_per_token(ms/token)']]
+                combined_df = combined_df[['users', 'input_tokens', 'output_tokens', 'throughput(tokens/second)', 'latency(ms)', 'TTFT(ms)', 'latency_per_token(ms/token)']]
                 combined_df = combined_df.round(3)
                 
                 # Sort the DataFrame
-                combined_df = combined_df.sort_values(['Users', 'Input Tokens', 'output tokens'])
+                combined_df = combined_df.sort_values(['users', 'input_tokens', 'output_tokens'])
 
                 click.echo(tabulate(combined_df, headers='keys', tablefmt='pretty', showindex=False))
 
@@ -141,9 +143,9 @@ def start(config):
                 user_counts=cfg['user_counts'],
                 input_tokens=cfg['input_tokens'],
                 output_tokens=cfg['output_tokens'],
-                dataset_dir=str(dataset_dir) / "EchoSwift-8k"
+                dataset_dir=str(dataset_dir) +"/"+ "EchoSwift-8k"
             )
-        
+
             benchmark.run_benchmark()
             
             # Pretty print results after each user count completes
@@ -154,17 +156,17 @@ def start(config):
                     avg_file = user_dir / f"avg_{input_token}_input_tokens.csv"
                     if avg_file.exists():
                         df = pd.read_csv(avg_file)
-                        df['Users'] = u
-                        df['Input Tokens'] = input_token
+                        df['users'] = u
+                        df['input_tokens'] = input_token
                         all_results.append(df)
 
             if all_results:
                 combined_df = pd.concat(all_results, ignore_index=True)
-                combined_df = combined_df[['Users', 'Input Tokens', 'output tokens', 'throughput(tokens/second)', 'latency(ms)', 'TTFT(ms)', 'latency_per_token(ms/token)']]
+                combined_df = combined_df[['users', 'input_tokens', 'output_tokens', 'throughput(tokens/second)', 'latency(ms)', 'TTFT(ms)', 'latency_per_token(ms/token)']]
                 combined_df = combined_df.round(3)
                 
                 # Sort the DataFrame
-                combined_df = combined_df.sort_values(['Users', 'Input Tokens', 'output tokens'])
+                combined_df = combined_df.sort_values(['users', 'input_tokens', 'output_tokens'])
 
                 click.echo(tabulate(combined_df, headers='keys', tablefmt='pretty', showindex=False))
 
