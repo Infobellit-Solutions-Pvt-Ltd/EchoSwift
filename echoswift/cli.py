@@ -41,7 +41,7 @@ def create_config(output='config.json'):
         "base_url": "http://10.216.178.15:8000/v1/completions",
         "inference_server": "vLLM",
         "model": "meta-llama/Meta-Llama-3-8B",
-        "random_prompt": false,
+        "random_prompt": False,
         "max_requests": 5,
         "user_counts": [3],
         "input_tokens": [32],
