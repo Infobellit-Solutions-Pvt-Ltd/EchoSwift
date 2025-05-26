@@ -1,7 +1,7 @@
 {
     "_comment": "EchoSwift Configuration",
     "out_dir": "test/Run2",
-    "base_url": "http://10.216.183.81:8000/v1/completions",
+    "base_url": "http://localhost:8000/v1/completions",
     "inference_server": "vLLM",
     "model": "/app/model",
     "random_prompt": false,
