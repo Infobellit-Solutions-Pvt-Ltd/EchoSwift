@@ -6,10 +6,13 @@ from typing import List
 from tqdm import tqdm
 import signal
 import pkg_resources
+import pandas as pd
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 class EchoSwift:
+
+    
     def __init__(self, output_dir: str, api_url: str, inference_server: str, model_name: str = None,
                  max_requests: int = 5, user_counts: List[int] = [1],
                  input_tokens: List[int] = None, output_tokens: List[int] = None,
@@ -24,7 +27,7 @@ class EchoSwift:
         self.output_tokens = output_tokens
         self.dataset_dir = Path(dataset_dir)
         self.random_prompt = random_prompt
-
+        
     def run_benchmark(self):
         self.output_dir.mkdir(parents=True, exist_ok=True)
         locust_logs_dir = self.output_dir / "locust_logs"
@@ -46,7 +49,7 @@ class EchoSwift:
                 self._run_locust(u, output_file=user_file, logs_dir=locust_logs_dir)
 
                 self._calculate_average(user_dir=user_dir, random_prompt=self.random_prompt)
-
+               
         else:
             logging.info("Using custom queries from Input_Dataset")
             total_requests = sum(self.user_counts) * self.max_requests * len(self.input_tokens) * len(self.output_tokens)
@@ -63,8 +66,9 @@ class EchoSwift:
                     for output_token in self.output_tokens:
                         logging.info(f"Running Locust with users={u}, input_tokens={input_token}, and output_tokens={output_token}")
                         self._run_locust(u, user_file, locust_logs_dir, input_token, output_token)
-
+                    
                     self._calculate_average(user_dir, input_token)
+                    
 
     def _run_locust(self, users: int, output_file: Path, logs_dir: Path,input_tokens: int = None, output_tokens: int = None):
         

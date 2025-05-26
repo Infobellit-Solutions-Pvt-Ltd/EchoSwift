@@ -1,13 +1,13 @@
 {
     "_comment": "EchoSwift Configuration",
-    "out_dir": "test_results/testing_run5",
-    "base_url": "http://gravedigger:8000/v1/completions",
+    "out_dir": "test/Run2",
+    "base_url": "http://10.216.183.81:8000/v1/completions",
     "inference_server": "vLLM",
-    "model": "/models",
+    "model": "/app/model",
     "random_prompt": false,
-    "max_requests": 5,
+    "max_requests": 1,
     "user_counts": [
-        10
+        5
     ],
     "input_tokens": [
         32

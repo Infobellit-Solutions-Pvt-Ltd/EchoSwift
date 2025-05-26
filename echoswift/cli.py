@@ -7,7 +7,7 @@ from echoswift.utils.plot_results import plot_benchmark_results
 import logging
 from tabulate import tabulate
 import pandas as pd
-from echoswift.optimaluser import OptimalUser
+from echoswift.optimaluser import adjust_user_count, run_benchmark_with_incremental_requests
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
@@ -95,6 +95,7 @@ def start(config):
     
     try:
         if cfg.get('random_prompt'):
+            print("inside if condition")
             # Use random queries from Dataset.csv
             benchmark = EchoSwift(
                 output_dir=cfg['out_dir'],
@@ -195,9 +196,20 @@ def optimaluserrun(config):
     logging.info("Using Filtered_ShareGPT_Dataset for the benchmark.")
 
     try:
-        OptimalUser(config)
-        click.echo("Tests completed successfully !!")
+        out_dir = cfg.get("out_dir")
+        if not out_dir:
+            print("Error: 'out_dir' not specified in the config file.")
+        
+        result_dir = Path(out_dir) / "Results"
+        result_dir.mkdir(parents=True, exist_ok=True)
     
+        optimal_user_count=adjust_user_count(config, result_dir)
+        click.echo(f"Optimal user count is : {optimal_user_count}")
+        if optimal_user_count is not None:
+          run_benchmark_with_incremental_requests(config, optimal_user_count, result_dir)
+        else:
+          click.echo("Error: Could not determine an optimal user count. Exiting.")
+
     except Exception as e:
         error_msg = f"An error occurred while running the benchmark: {str(e)}"
         logging.error(error_msg)
