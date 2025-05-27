@@ -101,7 +101,7 @@ class APITestUser(HttpUser):
                 data = {
                     "text": prompt,
                     "sampling_params":{
-                    "max_new_tokens": self.max_new_tokens,
+                    "max_new_tokens": 256,
                     "min_new_tokens": 3
                     },
                     "stream": True
