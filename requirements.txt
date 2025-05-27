@@ -9,5 +9,3 @@ locust==2.23.1
 click==8.0.3
 tqdm==4.62.3
 PyYAML==6.0
-keyboard
-pika
