@@ -39,6 +39,7 @@ def create_config(output='config.json'):
         "_comment": "EchoSwift Configuration",
         "out_dir": "test_results",
         "base_url": "http://10.216.178.15:8000/v1/completions",
+        "tokenizer_path": "",
         "inference_server": "vLLM",
         "model": "meta-llama/Meta-Llama-3-8B",
         "random_prompt": False,
@@ -66,7 +67,8 @@ def dataprep(config):
     cfg = load_config(config_path)
 
     click.echo("Downloading the filtered ShareGPT dataset...")
-    download_dataset_files("epsilondelta1982/EchoSwift-20k")
+    # download_dataset_files("epsilondelta1982/EchoSwift-20k")
+    download_dataset_files("epsilondelta1982/EchoSwift-20k-Dataset")
     download_dataset_files("sarthakdwi/EchoSwift-8k")
 
     # Create config
@@ -104,8 +106,10 @@ def start(config):
                 model_name=cfg.get('model'),
                 max_requests=cfg['max_requests'],
                 user_counts=cfg['user_counts'],
-                dataset_dir=str(dataset_dir) +"/"+ "EchoSwift-20k",
-                random_prompt=cfg['random_prompt']
+                output_tokens=cfg['output_tokens'][0],
+                dataset_dir=str(dataset_dir) +"/"+ "EchoSwift-20k-Dataset",
+                random_prompt=cfg['random_prompt'],
+                tokenizer_path=cfg['tokenizer_path']
             )
 
             benchmark.run_benchmark()
@@ -144,7 +148,8 @@ def start(config):
                 user_counts=cfg['user_counts'],
                 input_tokens=cfg['input_tokens'],
                 output_tokens=cfg['output_tokens'],
-                dataset_dir=str(dataset_dir) +"/"+ "EchoSwift-8k"
+                dataset_dir=str(dataset_dir) +"/"+ "EchoSwift-8k",
+                tokenizer_path=cfg['tokenizer_path']
             )
 
             benchmark.run_benchmark()

@@ -36,9 +36,14 @@ class APITestUser(HttpUser):
         self.inference_server = os.environ.get('INFERENCE_SERVER', " ")
         self.model_name = os.environ.get('MODEL_NAME', " ")
         self.random_prompt = os.environ.get('RANDOM_PROMPT', "False")
-        self.tokenizer_model = os.environ.get("MODEL_NAME", "").lstrip("/")
-        self.tokenizer = AutoTokenizer.from_pretrained("/mnt/Divya/models/Deepseek/Deepseek_Qwen_32b")
-        
+        # self.tokenizer_path = os.environ.get("TOKENIZER")
+        # self.tokenizer_model = os.environ.get("MODEL_NAME", "").lstrip("/")
+        if os.environ.get("TOKENIZER") != "":
+            self.tokenizer = AutoTokenizer.from_pretrained(os.environ.get("TOKENIZER"))
+        else:
+            # print(f"Failed to load tokenizer from '{self.tokenizer_model}', using fallback. Error: {e}")
+            self.tokenizer = AutoTokenizer.from_pretrained("hf-internal-testing/llama-tokenizer")
+
     @staticmethod
     def load_dataset(csv_file):
         """
@@ -62,25 +67,25 @@ class APITestUser(HttpUser):
 
         if self.random_prompt == "True":
             if self.inference_server == "TGI":
-                data = {'inputs': prompt, 'parameters': {'max_new_tokens': random.randint(3, 1024)}}
+                data = {'inputs': prompt, 'parameters': {'max_new_tokens': random.randint(3, self.max_new_tokens)}}
             
             elif self.inference_server == "Ollama":
                 data = {
                     "model": self.model_name, 
                     "prompt": prompt, 
                     "stream": True, 
-                    "options": {"num_predict": random.randint(3, 1024)}
+                    "options": {"num_predict": random.randint(3, self.max_new_tokens)}
                 }
         
             elif self.inference_server == "Llamacpp":
-                data = {"prompt": prompt, "n_predict": random.randint(3, 1024), "stream": True}
+                data = {"prompt": prompt, "n_predict": random.randint(3, self.max_new_tokens), "stream": True}
             
             elif self.inference_server == "vLLM":
                 data = {
                     "model": self.model_name,
                     "prompt": prompt,
                     "min_tokens": 3,
-                    "max_tokens": 256,
+                    "max_tokens": self.max_new_tokens,
                     "stream": True,
                 }
             
@@ -93,7 +98,7 @@ class APITestUser(HttpUser):
                         }
                     ],
                     "model": self.model_name,
-                    "max_tokens": random.randint(3, 1024),
+                    "max_tokens": random.randint(3, self.max_new_tokens),
                     "stream": True
                 }
 
@@ -101,8 +106,8 @@ class APITestUser(HttpUser):
                 data = {
                     "text": prompt,
                     "sampling_params":{
-                    "max_new_tokens": 256,
-                    "min_new_tokens": 3
+                        "min_new_tokens": 3,
+                        "max_new_tokens": self.max_new_tokens
                     },
                     "stream": True
                 }
@@ -148,8 +153,8 @@ class APITestUser(HttpUser):
                 data = {
                     "text": prompt,
                     "sampling_params":{
-                    "max_new_tokens": self.max_new_tokens,
-                    "min_new_tokens": self.max_new_tokens
+                        "max_new_tokens": self.max_new_tokens,
+                        "min_new_tokens": self.max_new_tokens
                     },
                     "stream": True
                 }

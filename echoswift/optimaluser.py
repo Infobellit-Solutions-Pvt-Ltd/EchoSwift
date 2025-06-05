@@ -183,11 +183,12 @@ def run_benchmark_with_incremental_requests(config_file, optimal_user_count, res
             # Copy and extract metrics
             copy_avg_response(config_file, result_dir, optimal_user_count)
 
-            metrics = extract_metrics_from_avg_response(config_file, result_dir, user_count)
+            metrics = extract_metrics_from_avg_response(config_file, result_dir, optimal_user_count)
             if not all(metric is not None for metric in metrics):
                 print("Error extracting metrics. Exiting.")
                 break
             
+            ttft, latency_per_token, latency, throughput, total_throughput = metrics
             print(f"Continuous Run - User Count: {optimal_user_count}, TTFT: {ttft} ms, "
                   f"Latency: {latency} ms, Latency per Token: {latency_per_token} ms/token, "
                   f"Throughput: {throughput} tokens/second, Total Throughput: {total_throughput} tokens/second")
@@ -207,8 +208,6 @@ def run_benchmark_with_incremental_requests(config_file, optimal_user_count, res
                 [ttft, latency_per_token, latency, throughput, total_throughput],
                 benchmark_time
             )
-
-            time.sleep(1)  # Pause between runs, adjust as needed
 
     except KeyboardInterrupt:
         print("\nContinuous benchmarking stopped by user.")
@@ -244,9 +243,9 @@ def adjust_user_count(config_file, result_dir):
     with open(config_file, 'r') as file:
         config = json.load(file)
 
-    user_count = 10  
+    user_count = config.get("user_counts")[0]  
     previous_user_count = 0
-    increment = 100
+    increment = config.get("increment_user")[0]
     out_dir = config.get("out_dir")
     if not out_dir:
         print("Error: 'out_dir' not specified in the config file.")
@@ -321,8 +320,6 @@ def update_config(config_file, optimal_user_count):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Benchmark automation script")
     parser.add_argument("config_file", type=str, help="Path to the benchmark configuration file")
-    parser.add_argument("--incremental", action="store_true", help="Run incremental benchmark")
-    parser.set_defaults(incremental=True)
     args = parser.parse_args()
 
     # Read the config file to get the output directory

@@ -16,7 +16,7 @@ class EchoSwift:
     def __init__(self, output_dir: str, api_url: str, inference_server: str, model_name: str = None,
                  max_requests: int = 5, user_counts: List[int] = [1],
                  input_tokens: List[int] = None, output_tokens: List[int] = None,
-                 dataset_dir: str = "Input_Dataset", random_prompt: bool = False):
+                 dataset_dir: str = "Input_Dataset", random_prompt: bool = False, tokenizer_path: str = None ):
         self.output_dir = Path(output_dir)
         self.api_url = api_url
         self.inference_server = inference_server
@@ -27,6 +27,7 @@ class EchoSwift:
         self.output_tokens = output_tokens
         self.dataset_dir = Path(dataset_dir)
         self.random_prompt = random_prompt
+        self.tokenizer_path = tokenizer_path
         
     def run_benchmark(self):
         self.output_dir.mkdir(parents=True, exist_ok=True)
@@ -46,7 +47,7 @@ class EchoSwift:
                 user_file.touch()
 
                 logging.info(f"Running Locust with users={u}")
-                self._run_locust(u, output_file=user_file, logs_dir=locust_logs_dir)
+                self._run_locust(u, output_tokens=self.output_tokens, output_file=user_file, logs_dir=locust_logs_dir)
 
                 self._calculate_average(user_dir=user_dir, random_prompt=self.random_prompt)
                
@@ -70,7 +71,7 @@ class EchoSwift:
                     self._calculate_average(user_dir, input_token)
                     
 
-    def _run_locust(self, users: int, output_file: Path, logs_dir: Path,input_tokens: int = None, output_tokens: int = None):
+    def _run_locust(self, users: int, output_file: Path, logs_dir: Path, input_tokens: int = None, output_tokens: int = None):
         
         env = os.environ.copy()
 
@@ -81,12 +82,13 @@ class EchoSwift:
             env.update({
                 "MAX_REQUESTS": str(self.max_requests),
                 "NUM_USERS": str(users),
-                # "MAX_NEW_TOKENS": str(output_tokens),
+                "MAX_NEW_TOKENS": str(output_tokens),
                 "API_URL": self.api_url,
                 "INFERENCE_SERVER": self.inference_server,
                 "INPUT_DATASET": str(self.dataset_dir / "Dataset.csv"),
                 "OUTPUT_FILE": str(output_file),
-                "RANDOM_PROMPT": "True"
+                "RANDOM_PROMPT": "True",
+                "TOKENIZER": str(self.tokenizer_path)
             })
 
             locust_file = pkg_resources.resource_filename('echoswift', 'llm_inference_master.py')
@@ -142,7 +144,8 @@ class EchoSwift:
                 "API_URL": self.api_url,
                 "INFERENCE_SERVER": self.inference_server,
                 "INPUT_DATASET": str(self.dataset_dir / f"Dataset_{input_tokens}.csv"),
-                "OUTPUT_FILE": str(output_file)
+                "OUTPUT_FILE": str(output_file),
+                "TOKENIZER": str(self.tokenizer_path)
             })
 
             locust_file = pkg_resources.resource_filename('echoswift', 'llm_inference_master.py')
