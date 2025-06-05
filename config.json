@@ -1,23 +1,22 @@
 {
     "_comment": "EchoSwift Configuration",
-    "out_dir": "testing/RUN3",
-    "base_url": "http://10.216.183.81:8000/v1/completions",
-    "tokenizer_path": "/mnt/Divya/test/models/Deepseek/Deepseek_Qwen_32b/",
+    "out_dir": "test_results",
+    "base_url": "http://localhost:8000/v1/completions",
+    "tokenizer_path": "path/to/tokenizer",
     "inference_server": "vLLM",
     "model": "/model",
-    "random_prompt": true,
+    "random_prompt": false,
     "max_requests": 1,
     "user_counts": [
-        186
+        1
     ],
     "increment_user": [
-        100
+        10
     ],
     "input_tokens": [
         32
     ],
     "output_tokens": [
         256
-    ],
-    "optimal_user_count": 186
+    ]
 }
