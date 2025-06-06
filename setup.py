@@ -27,6 +27,8 @@ setup(
         "transformers",
         "datasets",
         "tabulate",
+        "keyboard",
+        "pika",
     ],
     entry_points={
         "console_scripts": [

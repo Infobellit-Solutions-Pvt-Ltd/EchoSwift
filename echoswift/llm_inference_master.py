@@ -12,9 +12,6 @@ import json
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s %(levelname)s %(message)s')
 
-# Initialize the tokenizer for encoding/decoding text
-tokenizer = AutoTokenizer.from_pretrained("hf-internal-testing/llama-tokenizer")
-
 # Global barrier to synchronize users
 num_users = int(os.environ.get("NUM_USERS", 10))
 barrier = Barrier(num_users)
@@ -38,6 +35,14 @@ class APITestUser(HttpUser):
         self.output_file_path = os.environ.get('OUTPUT_FILE', 'output.csv')
         self.inference_server = os.environ.get('INFERENCE_SERVER', " ")
         self.model_name = os.environ.get('MODEL_NAME', " ")
+        self.random_prompt = os.environ.get('RANDOM_PROMPT', "False")
+        # self.tokenizer_path = os.environ.get("TOKENIZER")
+        # self.tokenizer_model = os.environ.get("MODEL_NAME", "").lstrip("/")
+        if os.environ.get("TOKENIZER") != "":
+            self.tokenizer = AutoTokenizer.from_pretrained(os.environ.get("TOKENIZER"))
+        else:
+            # print(f"Failed to load tokenizer from '{self.tokenizer_model}', using fallback. Error: {e}")
+            self.tokenizer = AutoTokenizer.from_pretrained("hf-internal-testing/llama-tokenizer")
 
     @staticmethod
     def load_dataset(csv_file):
@@ -60,41 +65,101 @@ class APITestUser(HttpUser):
         """
         prompt = random.choice(self.questions)
 
-        if self.inference_server == "TGI":
-            data = {'inputs': prompt, 'parameters': {'max_new_tokens': self.max_new_tokens}}
-        elif self.inference_server == "Ollama":
-            data = {
-                "model": self.model_name, 
-                "prompt": prompt, 
-                "stream": True, 
-                "options": {"num_predict": self.max_new_tokens}
-            }
-        elif self.inference_server == "Llamacpp":
-            data = {"prompt": prompt, "n_predict": self.max_new_tokens, "stream": True}
+        if self.random_prompt == "True":
+            if self.inference_server == "TGI":
+                data = {'inputs': prompt, 'parameters': {'max_new_tokens': random.randint(3, self.max_new_tokens)}}
+            
+            elif self.inference_server == "Ollama":
+                data = {
+                    "model": self.model_name, 
+                    "prompt": prompt, 
+                    "stream": True, 
+                    "options": {"num_predict": random.randint(3, self.max_new_tokens)}
+                }
+        
+            elif self.inference_server == "Llamacpp":
+                data = {"prompt": prompt, "n_predict": random.randint(3, self.max_new_tokens), "stream": True}
+            
+            elif self.inference_server == "vLLM":
+                data = {
+                    "model": self.model_name,
+                    "prompt": prompt,
+                    "min_tokens": 3,
+                    "max_tokens": self.max_new_tokens,
+                    "stream": True,
+                }
+            
+            elif self.inference_server == "NIMS":
+                data = {
+                    "messages": [
+                        {
+                            "content": prompt,
+                            "role": "user"
+                        }
+                    ],
+                    "model": self.model_name,
+                    "max_tokens": random.randint(3, self.max_new_tokens),
+                    "stream": True
+                }
 
-        elif self.inference_server == "vLLM":
-            data = {
+            elif self.inference_server == "SGLang":
+                data = {
+                    "text": prompt,
+                    "sampling_params":{
+                        "min_new_tokens": 3,
+                        "max_new_tokens": self.max_new_tokens
+                    },
+                    "stream": True
+                }
+        
+        else:
+            if self.inference_server == "TGI":
+                data = {'inputs': prompt, 'parameters': {'max_new_tokens': self.max_new_tokens}}
+            
+            elif self.inference_server == "Ollama":
+                data = {
+                    "model": self.model_name, 
+                    "prompt": prompt, 
+                    "stream": True, 
+                    "options": {"num_predict": self.max_new_tokens}
+                }
+            
+            elif self.inference_server == "Llamacpp":
+                data = {"prompt": prompt, "n_predict": self.max_new_tokens, "stream": True}
+
+            elif self.inference_server == "vLLM":
+                data = {
+                    "model": self.model_name,
+                    "prompt": prompt,
+                    "max_tokens": self.max_new_tokens,
+                    "min_tokens": self.max_new_tokens,
+                    "stream": True
+                }
+
+            elif self.inference_server == "NIMS":
+                data={
+                    "messages": [
+                        {
+                            "content": prompt,
+                            "role": "user"
+                        }
+                    ],
                 "model": self.model_name,
-                "prompt": prompt,
-                "max_tokens": self.max_new_tokens,
-                "min_tokens": self.max_new_tokens,
-                "stream": True
-            }
-
-        elif self.inference_server == "NIMS":
-            data={
-                "messages": [
-                    {
-                        "content": prompt,
-                        "role": "user"
-                    }
-                ],
-                "model": self.model_name,
                 "max_tokens": self.max_new_tokens,
                 "stream": True
-            }
+                }
 
-        input_tokens = len(tokenizer.encode(prompt))
+            elif self.inference_server == "SGLang":
+                data = {
+                    "text": prompt,
+                    "sampling_params":{
+                        "max_new_tokens": self.max_new_tokens,
+                        "min_new_tokens": self.max_new_tokens
+                    },
+                    "stream": True
+                }
+
+        input_tokens = len(self.tokenizer.encode(prompt))
         return data, input_tokens
 
     def process_response(self, response):
@@ -109,14 +174,42 @@ class APITestUser(HttpUser):
             "Llamacpp": self._process_llamacpp_response,
             "vLLM":self._process_vLLM_response,
             "NIMS":self._process_NIMS_response,
+            "SGLang": self._process_SGLang_response
         }
 
         handler = inference_server_handlers.get(self.inference_server, None)
         if handler:
             generated_text, ttft = handler(response)
 
-        output_tokens = len(tokenizer.encode(generated_text))
+        output_tokens = len(self.tokenizer.encode(generated_text))
         return generated_text, output_tokens, ttft
+
+    def _process_SGLang_response(self, response):
+        """
+        Process the response for TGI inference_server.
+        """
+        generated_text = ""
+        ttft = None
+
+        for i, chunk in enumerate(response.iter_lines()):
+            if chunk and i == 0 and ttft is None:
+                ttft = (time.perf_counter() - start_time)
+                logging.info(f"TTFT: {ttft*1000:.3f} ms")
+
+            decoded_chunk = chunk.decode("utf-8")
+            if decoded_chunk == "data: [DONE]":
+                    break
+            if "data:" in decoded_chunk:
+                try:
+                    json_data = decoded_chunk.split("data:")[1]
+                    json_data = json.loads(json_data)
+                    token = json_data["text"]
+                    generated_text = token
+                except (json.JSONDecodeError, KeyError) as e:
+                    print("Failed to extract decoded text from JSON")
+                    
+        return generated_text, ttft
+    
 
     def _process_tgi_response(self, response):
         """

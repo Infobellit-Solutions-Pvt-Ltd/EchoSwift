@@ -8,4 +8,8 @@ transformers==4.36.2
 locust==2.23.1
 click==8.0.3
 tqdm==4.62.3
+<<<<<<< HEAD
 PyYAML==6.0
+=======
+PyYAML==6.0
+>>>>>>> b76f312 (Mqtt version)

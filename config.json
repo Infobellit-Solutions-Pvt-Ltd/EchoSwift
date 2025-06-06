@@ -1,11 +1,26 @@
 {
-  "_comment": "EchoSwift Configuration",
-  "out_dir": "test_results",
-  "base_url": "http://10.216.178.15:8000/v1/completions",
-  "inference_server": "vLLM",
-  "model": "meta-llama/Meta-Llama-3-8B",
-  "max_requests": 5,
-  "user_counts": [3],
-  "input_tokens": [32],
-  "output_tokens": [256]
+    "_comment": "EchoSwift Configuration",
+    "out_dir": "test_optimal/Results1",
+    "topic": "topic_name",
+    "mqtt_user": "USER_NAME",
+    "mqtt_pass": "Password",
+    "mqtt_ip": "HOST_IP",
+    "base_url": "http://localhost:8000/v1/completions",
+    "tokenizer_path": "/path/to/tokenizer",
+    "inference_server": "vLLM",
+    "model": "/model",
+    "random_prompt": true,
+    "max_requests": 1,
+    "user_counts": [
+        1
+    ],
+    "increment_user": [
+        10
+    ],
+    "input_tokens": [
+        32
+    ],
+    "output_tokens": [
+        256
+    ]
 }

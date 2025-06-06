@@ -72,6 +72,10 @@ Modify the `config.json` file in the project root directory. Here's an example c
   "base_url": "http://10.216.178.15:8000/v1/completions",
   "inference_server": "vLLM",
   "model": "meta-llama/Meta-Llama-3-8B",
+<<<<<<< HEAD
+=======
+  "use_random_query": false,
+>>>>>>> b76f312 (Mqtt version)
   "max_requests": 5,
   "user_counts": [3],
   "input_tokens": [32],

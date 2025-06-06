@@ -4,12 +4,11 @@ import os
 import shutil
 import pandas as pd
 from pathlib import Path
-import keyboard  # Install this with `pip install keyboard`
+import keyboard  
 import argparse
 import time
 import pika
 import random
-#import echoswift.llm_loadgen
 
 # Define the threshold for TTFT and latency
 VALIDATION_CRITERION = {"TTFT": 2000, "latency_per_token": 200}
@@ -19,7 +18,7 @@ def get_connection(config_file):
     with open(config_file, "r") as file:
        config=json.load(file)
 
-    RABBITMQ_HOST = config.get("mqtt_ip", "10.216.179.127")
+    RABBITMQ_HOST = config.get("mqtt_ip", "10.216.169.212")
     RABBITMQ_USER = config.get("mqtt_user", "admin")
     RABBITMQ_PASSWORD = config.get("mqtt_pass", "Infobell@123")
     CREDENTIALS = pika.PlainCredentials(RABBITMQ_USER, RABBITMQ_PASSWORD)
@@ -34,9 +33,6 @@ def send_message(channel, queue_name, msg):
       channel.queue_declare(queue=queue_name, durable=True)
       channel.basic_publish(exchange='', routing_key=queue_name, body=msg)
       print(f"Sent: {msg} to Queue: {queue_name}")
-
-
-
 
 def validate_criterion(ttft, latency_per_token):
     """
@@ -79,7 +75,6 @@ def copy_avg_response(config_file, result_dir, user_count):
             return
 
         out_dir_path = Path(out_dir)
-        
 
         if config.get("random_prompt"):
             user_folder = out_dir_path / f"{user_count}_User"
@@ -95,9 +90,7 @@ def copy_avg_response(config_file, result_dir, user_count):
             user_folder = out_dir_path / f"{user_count}_User"
             input_token = config.get("input_tokens")[0]
             avg_response_path = user_folder / f"avg_{input_token}_input_tokens.csv"
-            # print(user_folder, input_token, avg_response_path)
             if avg_response_path.exists():
-                print("ok")
                 new_name = f"avg_{input_token}_input_token_User{user_count}.csv"
                 shutil.copy(avg_response_path, result_dir / new_name)
                 print(f"Copied and renamed avg_32_input_tokens.csv to {result_dir / new_name}")
@@ -186,6 +179,7 @@ def binary_search_user_count(config_file, low, high, result_dir):
         ttft, latency_per_token, latency, throughput, total_throughput = metrics
         print(f"Binary Search - User Count: {mid}, TTFT: {ttft} ms, Latency: {latency} ms, "
               f"Latency per Token: {latency_per_token} ms/token, Throughput: {throughput} tokens/second, Total Throughput: {total_throughput} tokens/second")
+        
         try:
             out_dir = json.load(open(config_file))["out_dir"]
             binary_s_report_path = Path(out_dir) / "Results" / "binary_report.csv"
@@ -205,7 +199,7 @@ def binary_search_user_count(config_file, low, high, result_dir):
         
         except Exception as e:
             print(f"Error generating binary search report: {e}")
-
+        
         if validate_criterion(ttft, latency_per_token):
             # Threshold met; continue searching upward
             low = mid + 1
@@ -215,7 +209,7 @@ def binary_search_user_count(config_file, low, high, result_dir):
 
     # Return the highest user count that met the criteria
     return low - 1
-
+ 
 def send_data(channel, topic_name, result_dir):
     #global count
     df = pd.read_csv(result_dir)
@@ -232,8 +226,7 @@ def send_data(channel, topic_name, result_dir):
         data = json.dumps(formatted_data)
     
     send_message(channel, f"{topic_name}", data)
-   
-
+ 
 def run_benchmark_with_incremental_requests(config_file, optimal_user_count, result_dir):
     """
     Run the benchmark continuously after updating the config with the optimal user count.
@@ -306,8 +299,8 @@ def run_benchmark_with_incremental_requests(config_file, optimal_user_count, res
            # time.sleep(5)  # Pause between runs, adjust as needed
 
     except KeyboardInterrupt:
-        print("\nContinuous benchmarking stopped by user.")
-
+        print("\nContinuous benchmarking stopped by user.") 
+  
 
 
 def generate_summary_report(config_file, optimal_user_count, metrics, benchmark_time):
@@ -328,7 +321,7 @@ def generate_summary_report(config_file, optimal_user_count, metrics, benchmark_
 
         df = pd.DataFrame(report_data)
         df.to_csv(summary_report_path, index=False)
-        print(f"Summary report generated at {summary_report_path}")
+        #print(f"Summary report generated at {summary_report_path}")
         return summary_report_path
 
     except Exception as e:
@@ -340,24 +333,18 @@ def adjust_user_count(config_file, result_dir):
     """
     _, channel = get_connection(config_file)
     with open(config_file, 'r') as file:
-        config = json.load(file)
+         config = json.load(file)
 
-    user_count = 100 # Start with 56 users
+    user_count = config.get("user_counts")[0]  
     previous_user_count = 0
-    increment = 100
-    
+    increment = config.get("increment_user")[0]
     topic_name = config.get("topic")
-    out_dir = config.get("out_dir")
-    
     out_dir = config.get("out_dir")
     if not out_dir:
         print("Error: 'out_dir' not specified in the config file.")
         return
     summary_report_path = Path(out_dir) / "Results" / "avg_report.csv"
 
-    # out_dir_path = Path(out_dir)
-    # result_dir = out_dir_path / "Results"
-    # result_dir.mkdir(parents=True, exist_ok=True)
     
     optimal_user_count = 0
     final_metrics = None
@@ -388,7 +375,7 @@ def adjust_user_count(config_file, result_dir):
         print(f"User Count: {user_count}, TTFT: {ttft} ms, Latency: {latency} ms, "
               f"Latency per Token: {latency_per_token} ms/token, Throughput: {throughput} tokens/second, "
               f"Total Throughput: {total_throughput} tokens/second")
-              
+        
         try:
             summary_report_path.parent.mkdir(parents=True, exist_ok=True)
             report_data = {
@@ -406,7 +393,6 @@ def adjust_user_count(config_file, result_dir):
 
         except Exception as e:
             print(f"Error generating summary report: {e}")
-
 
         if validate_criterion(ttft, latency_per_token):
             print(f"Threshold met for {user_count} users.")
@@ -427,87 +413,6 @@ def adjust_user_count(config_file, result_dir):
     else:
         print("No valid optimal user count found. Exiting.")
         return None  # Return None explicitly
-    
-def test_optimal_user_count(config_file, optimal_user_count, result_dir):
-    """
-    Test the optimal user count for three runs to validate if it meets the criteria.
-    If the criteria is met, start continuous benchmarking.
-    If not, reduce the optimal user count by 1 and repeat the process.
-    """
-    _, channel = get_connection(config_file)
-    run_count = 0
-    while run_count < 3:
-        global Request
-        Request+=1
-        print(f"Running test {run_count + 1} for optimal user count: {optimal_user_count}")
-        
-        # Update the config file with the optimal user count
-        update_config(config_file, optimal_user_count)
-        
-        with open(config_file, 'r') as file:
-            config = json.load(file)
-        
-        topic_name = config.get("topic")
-        out_dir = config.get("out_dir")
-        if not out_dir:
-            print("Error: 'out_dir' not specified in the config file.")
-            return
-        
-        
-        
-        # Run the benchmark
-        result, benchmark_time = run_benchmark(config_file)
-        if result is None:
-            print("Benchmark run failed. Exiting test.")
-            break
-
-        # Copy and extract metrics
-        copy_avg_response(config_file, result_dir, optimal_user_count)
-        metrics = extract_metrics_from_avg_response(config_file, result_dir, optimal_user_count)
-        
-        if any(metric is None for metric in metrics):
-            print("Error extracting metrics. Exiting test.")
-            break
-
-        ttft, latency_per_token, latency, throughput, total_throughput = metrics
-        print(f"Test {run_count + 1} - User Count: {optimal_user_count}, TTFT: {ttft} ms, "
-              f"Latency: {latency} ms, Latency per Token: {latency_per_token} ms/token, "
-              f"Throughput: {throughput} tokens/second, Total Throughput: {total_throughput} tokens/second")
-        summary_report_path = Path(out_dir) / "Results" / "summary_report.csv"
-        
-        try:
-            summary_report_path.parent.mkdir(parents=True, exist_ok=True)
-            report_data = {
-                "Request": Request,
-                "concurrent_user": [optimal_user_count],
-                "ttft": ttft,
-                "token_latency": latency_per_token,
-                "tokens_per_sec": round(optimal_user_count * throughput, 2)
-            }
-
-            df = pd.DataFrame(report_data)
-            df.to_csv(summary_report_path, index=False)
-            print(f"Summary report generated at {summary_report_path}")
-            send_data(channel, topic_name, summary_report_path)
-
-        except Exception as e:
-            print(f"Error generating summary report: {e}")
-        
-
-        if validate_criterion(ttft, latency_per_token):
-            print(f"Threshold met for {optimal_user_count} users on test {Request + 1}.")
-            Request += 1
-        else:
-            print(f"Threshold not met for {optimal_user_count} users on test {run_count + 1}.")
-            optimal_user_count -= 1  # Reduce the optimal user count by 1
-            print(f"Reduced optimal user count to {optimal_user_count}.")
-            run_count = 0  # Reset run count to retry with the new user count
-
-    # After 3 successful runs, start continuous benchmarking
-    if run_count == 3:
-        print(f"Optimal user count validated after 3 runs: {optimal_user_count}. Starting continuous benchmarking.")
-        run_benchmark_with_incremental_requests(config_file, optimal_user_count, result_dir)
-
 
 def update_config(config_file, optimal_user_count):
     """
@@ -517,8 +422,6 @@ def update_config(config_file, optimal_user_count):
         config = json.load(file)
     
     if optimal_user_count is not None and optimal_user_count > 0:
-        #adjusted_user_count = optimal_user_count - 5
-        #if adjusted_user_count > 0:
         config["optimal_user_count"] = optimal_user_count
         config["user_counts"] = [optimal_user_count]  # Ensure this is a valid list
         config["max_requests"] = 1
@@ -532,35 +435,22 @@ def update_config(config_file, optimal_user_count):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Benchmark automation script")
     parser.add_argument("config_file", type=str, help="Path to the benchmark configuration file")
-    parser.add_argument("--incremental", action="store_true", help="Run incremental benchmark")
-    parser.set_defaults(incremental=True)
     args = parser.parse_args()
 
     # Read the config file to get the output directory
-    with open(args.config_file, "r") as file:
-        config = json.load(file)
+    # with open(args.config_file, "r") as file:
+    #     config = json.load(file)
     
-    out_dir = config.get("out_dir")
-    if not out_dir:
-        print("Error: 'out_dir' not specified in the config file.")
+    # out_dir = config.get("out_dir")
+    # if not out_dir:
+    #     print("Error: 'out_dir' not specified in the config file.")
         
     
-    result_dir = Path(out_dir) / "Results"
-    result_dir.mkdir(parents=True, exist_ok=True)
+    # result_dir = Path(out_dir) / "Results"
+    # result_dir.mkdir(parents=True, exist_ok=True)
     
-    optimal_user_count = adjust_user_count(args.config_file, result_dir)    
+    # optimal_user_count = adjust_user_count(args.config_file, result_dir)    
     
-    if optimal_user_count is not None:
-       # test_optimal_user_count(args.config_file, optimal_user_count, result_dir)
-       #start_user_count = 2210  # you can replace this with optimal_user_count if needed
-       run_benchmark_with_incremental_requests(config_file=args.config_file, optimal_user_count=optimal_user_count, result_dir=result_dir)
-
-    
-    
-    
-    '''if optimal_user_count is not None:
-        update_config(args.config_file, optimal_user_count)
-        run_benchmark_with_incremental_requests(args.config_file, optimal_user_count, result_dir)
-    else:
-        print("Error: Could not determine an optimal user count. Exiting.")'''
+    # if optimal_user_count is not None:
+    #     run_benchmark_with_incremental_requests(args.config_file, optimal_user_count, result_dir)
 
