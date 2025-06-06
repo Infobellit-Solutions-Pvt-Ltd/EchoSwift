@@ -18,9 +18,9 @@ def get_connection(config_file):
     with open(config_file, "r") as file:
        config=json.load(file)
 
-    RABBITMQ_HOST = config.get("mqtt_ip", "10.216.169.212")
+    RABBITMQ_HOST = config.get("mqtt_ip", "10.216.216.17")
     RABBITMQ_USER = config.get("mqtt_user", "admin")
-    RABBITMQ_PASSWORD = config.get("mqtt_pass", "Infobell@123")
+    RABBITMQ_PASSWORD = config.get("mqtt_pass", "Infobell###")
     CREDENTIALS = pika.PlainCredentials(RABBITMQ_USER, RABBITMQ_PASSWORD)
     CONNECTION_PARAMS = pika.ConnectionParameters(host=RABBITMQ_HOST, credentials=CREDENTIALS)
 
