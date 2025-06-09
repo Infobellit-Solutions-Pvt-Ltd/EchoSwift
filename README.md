@@ -7,9 +7,12 @@ EchoSwift is a powerful and flexible tool designed for benchmarking Large Langua
 ## Features
 
 - Benchmark LLM inference across multiple Inference Servers
-- Measure key performance metrics: latency, throughput, and TTFT
+- Measure key performance metrics: latency, throughput, and TTFT (Time to First Token)
 - Support for varying input and output token lengths
 - Simulate concurrent users to test scalability
+- Determine the optimal number of concurrent users the server can handle while maintaining:
+      TTFT ≤ 2000 ms
+      Token latency ≤ 200 ms
 - Easy-to-use CLI interface
 - Detailed logging and progress tracking
 
@@ -19,7 +22,7 @@ EchoSwift is a powerful and flexible tool designed for benchmarking Large Langua
   - Ollama
   - Llamacpp
   - NIMS
-  - 
+  - SGlang
 
 ## Performance metrics:
 
@@ -100,7 +103,7 @@ Adjust these parameters according to your LLM endpoint you're benchmarking.
 To start the benchmark using the configuration from `config.json`:
 
 ```bash
-echoswift start --config path/to/your/config.json
+echoswift optimaluserrun --config path/to/your/config.json
 ```
 
 ### 4. Plot the Results
