@@ -19,6 +19,7 @@ EchoSwift is a powerful and flexible tool designed for benchmarking Large Langua
   - Ollama
   - Llamacpp
   - NIMS
+  - 
 
 ## Performance metrics:
 
@@ -67,17 +68,29 @@ Modify the `config.json` file in the project root directory. Here's an example c
 
 ```json
 {
-  "_comment": "EchoSwift Configuration",
-  "out_dir": "test_results",
-  "base_url": "http://10.216.178.15:8000/v1/completions",
-  "inference_server": "vLLM",
-  "model": "meta-llama/Meta-Llama-3-8B",
-  "use_random_query": false,
-  "max_requests": 5,
-  "user_counts": [3],
-  "input_tokens": [32],
-  "output_tokens": [256]
+    "_comment": "EchoSwift Configuration",
+    "out_dir": "test_results/optimal",
+    "base_url": "http://10.216.183.81:8000/v1/completions",
+    "tokenizer_path": " ",
+    "inference_server": "vLLM",
+    "model": "/model",
+    "random_prompt": true,
+    "max_requests": 1,
+    "user_counts": [
+        100
+    ],
+    "increment_user": [
+        100
+    ],
+    "input_tokens": [
+        32
+    ],
+    "output_tokens": [
+        256
+    ],
+    "optimal_user_count": 198
 }
+
 ```
 
 Adjust these parameters according to your LLM endpoint you're benchmarking.
