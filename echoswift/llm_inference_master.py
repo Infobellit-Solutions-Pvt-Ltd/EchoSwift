@@ -39,7 +39,7 @@ class APITestUser(HttpUser):
         # self.tokenizer_path = os.environ.get("TOKENIZER")
         # self.tokenizer_model = os.environ.get("MODEL_NAME", "").lstrip("/")
         if os.environ.get("TOKENIZER") != "":
-            self.tokenizer = AutoTokenizer.from_pretrained(os.environ.get("TOKENIZER"))
+            self.tokenizer = AutoTokenizer.from_pretrained(os.environ.get("TOKENIZER"),local_files_only=True)  
         else:
             # print(f"Failed to load tokenizer from '{self.tokenizer_model}', using fallback. Error: {e}")
             self.tokenizer = AutoTokenizer.from_pretrained("hf-internal-testing/llama-tokenizer")
