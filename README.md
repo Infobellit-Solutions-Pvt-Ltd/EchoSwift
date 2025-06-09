@@ -11,8 +11,7 @@ EchoSwift is a powerful and flexible tool designed for benchmarking Large Langua
 - Support for varying input and output token lengths
 - Simulate concurrent users to test scalability
 - Determine the optimal number of concurrent users the server can handle while maintaining:
-      TTFT ≤ 2000 ms
-      Token latency ≤ 200 ms
+      TTFT < 2000 ms and Token latency < 200 ms
 - Easy-to-use CLI interface
 - Detailed logging and progress tracking
 
