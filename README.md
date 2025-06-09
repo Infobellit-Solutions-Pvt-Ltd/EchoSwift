@@ -7,9 +7,10 @@ EchoSwift is a powerful and flexible tool designed for benchmarking Large Langua
 ## Features
 
 - Benchmark LLM inference across multiple Inference Servers
-- Measure key performance metrics: latency, throughput, and TTFT
+- Measure key performance metrics: latency, throughput, and TTFT (Time to First Token)
 - Support for varying input and output token lengths
 - Simulate concurrent users to test scalability
+- Determine the optimal number of concurrent users the server can handle while maintaining: TTFT < 2000 ms and Token latency < 200 ms
 - Easy-to-use CLI interface
 - Detailed logging and progress tracking
 
@@ -19,6 +20,7 @@ EchoSwift is a powerful and flexible tool designed for benchmarking Large Langua
   - Ollama
   - Llamacpp
   - NIMS
+  - SGlang
 
 ## Performance metrics:
 
@@ -67,16 +69,31 @@ Modify the `config.json` file in the project root directory. Here's an example c
 
 ```json
 {
-  "_comment": "EchoSwift Configuration",
-  "out_dir": "test_results",
-  "base_url": "http://10.216.178.15:8000/v1/completions",
-  "inference_server": "vLLM",
-  "model": "meta-llama/Meta-Llama-3-8B",
-  "use_random_query": false,
-  "max_requests": 5,
-  "user_counts": [3],
-  "input_tokens": [32],
-  "output_tokens": [256]
+    "_comment": "EchoSwift Configuration",
+    "out_dir": "Results",
+    "topic": "test_queue1",
+    "mqtt_user": "admin",
+    "mqtt_pass": "Password",
+    "mqtt_ip": "10.216.xxx.xxx",
+    "base_url": "http://10.216.xxx.xx:8000/v1/completions",
+    "tokenizer_path": "",
+    "inference_server": "vLLM",
+    "model": "/model",
+    "random_prompt": true,
+    "max_requests": 1,
+    "user_counts": [
+        100
+    ],
+    "increment_user": [
+        100
+    ],
+    "input_tokens": [
+        32
+    ],
+    "output_tokens": [
+        256
+    ],
+    "optimal_user_count": 199
 }
 ```
 
@@ -87,7 +104,7 @@ Adjust these parameters according to your LLM endpoint you're benchmarking.
 To start the benchmark using the configuration from `config.json`:
 
 ```bash
-echoswift start --config path/to/your/config.json
+echoswift optimaluserrun --config path/to/your/config.json
 ```
 
 ### 4. Plot the Results
