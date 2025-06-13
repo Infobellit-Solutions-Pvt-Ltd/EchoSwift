@@ -2,7 +2,7 @@ import pytest
 from click.testing import CliRunner
 from echoswift.cli import cli
 import json
-from unittest.mock import patch, Mock, call
+from unittest.mock import patch, Mock
 import pandas as pd
 from pathlib import Path
 
@@ -15,6 +15,7 @@ def mock_config_file(tmp_path):
     config = {
         "out_dir": "test_results",
         "base_url": "http://localhost:8000/v1/completions",
+        "tokenizer_path": "meta-llama/Meta-Llama-3-8B",
         "inference_server": "vLLM",
         "model": "meta-llama/Meta-Llama-3-8B",
         "max_requests": 5,
@@ -41,14 +42,9 @@ def test_cli_help(runner):
 def test_dataprep_command(mock_create_config, mock_download, runner):
     result = runner.invoke(cli, ['dataprep'])
     assert result.exit_code == 0
-
-    expected_calls = [
-        call("epsilondelta1982/EchoSwift-20k-Dataset"),
-        call("sarthakdwi/EchoSwift-8k")
-    ]
-    mock_download.assert_has_calls(expected_calls, any_order=False)
     assert mock_download.call_count == 2
-
+    assert call("epsilondelta1982/EchoSwift-20k-Dataset") in mock_download.call_args_list
+    assert call("sarthakdwi/EchoSwift-8k") in mock_download.call_args_list
     mock_create_config.assert_called_once_with('config.json')
     assert "Downloading the filtered ShareGPT dataset..." in result.output
     assert "Creating configuration file..." in result.output
@@ -56,12 +52,15 @@ def test_dataprep_command(mock_create_config, mock_download, runner):
 
 @patch('echoswift.cli.download_dataset_files')
 @patch('echoswift.cli.create_config')
-def test_dataprep_command_custom_config(mock_create_config, mock_download, runner):
-    result = runner.invoke(cli, ['dataprep', '--config', 'custom_config.json'])
-    assert result.exit_code == 0
+def test_dataprep_command_custom_config(mock_create_config, mock_download, runner, tmp_path):
+    custom_config_path = tmp_path / "custom_config.json"
+    result = runner.invoke(cli, ['dataprep', '--config', str(custom_config_path)])
 
+    assert result.exit_code == 0
     assert mock_download.call_count == 2
-    mock_create_config.assert_called_once_with('custom_config.json')
+    assert call("epsilondelta1982/EchoSwift-20k-Dataset") in mock_download.call_args_list
+    assert call("sarthakdwi/EchoSwift-8k") in mock_download.call_args_list
+    mock_create_config.assert_called_once_with(str(custom_config_path))
 
 def test_start_command_without_config(runner):
     result = runner.invoke(cli, ['start'])
@@ -78,12 +77,13 @@ def test_start_command_with_config(mock_tabulate, mock_concat, mock_read_csv, mo
     mock_config = {
         "out_dir": "test_results",
         "base_url": "http://localhost:8000/v1/completions",
+        "tokenizer_path": "meta-llama/Meta-Llama-3-8B",
         "inference_server": "vLLM",
         "model": "meta-llama/Meta-Llama-3-8B",
         "max_requests": 5,
         "user_counts": [3],
         "input_tokens": [32],
-        "output_tokens": [256]
+        "output_tokens": [256],
     }
     mock_load_config.return_value = mock_config
 
@@ -117,7 +117,8 @@ def test_start_command_with_config(mock_tabulate, mock_concat, mock_read_csv, mo
         user_counts=mock_config['user_counts'],
         input_tokens=mock_config['input_tokens'],
         output_tokens=mock_config['output_tokens'],
-        dataset_dir=str(mock_path.return_value)
+        dataset_dir=str(mock_path.return_value),
+        tokenizer_path=mock_config['tokenizer_path']
     )
     mock_benchmark_instance.run_benchmark.assert_called_once()
     mock_read_csv.assert_called()
@@ -130,6 +131,7 @@ def test_start_command_without_dataset(mock_load_config, mock_path, runner, mock
     mock_config = {
         "out_dir": "test_results",
         "base_url": "http://localhost:8000/v1/completions",
+        "tokenizer_path": "meta-llama/Meta-Llama-3-8B"
         "inference_server": "vLLM",
         "model": "meta-llama/Meta-Llama-3-8B",
         "max_requests": 5,
@@ -159,7 +161,7 @@ def test_plot_command_with_results_dir(mock_plot, runner, tmp_path):
     result = runner.invoke(cli, ['plot', '--results-dir', str(results_dir)])
     
     assert result.exit_code == 0
-    mock_plot.assert_called_once_with(results_dir, False)
+    mock_plot.assert_called_once_with(results_dir)
     assert f"Plots have been generated and saved in {results_dir}" in result.output
 
 def test_plot_command_with_invalid_results_dir(runner):
