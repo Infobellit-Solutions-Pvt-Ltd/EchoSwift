@@ -2,7 +2,7 @@ import pytest
 from click.testing import CliRunner
 from echoswift.cli import cli
 import json
-from unittest.mock import patch, Mock
+from unittest.mock import patch, Mock, call
 import pandas as pd
 from pathlib import Path
 
@@ -41,7 +41,14 @@ def test_cli_help(runner):
 def test_dataprep_command(mock_create_config, mock_download, runner):
     result = runner.invoke(cli, ['dataprep'])
     assert result.exit_code == 0
-    mock_download.assert_called_once_with("sarthakdwi/EchoSwift-8k")
+
+    expected_calls = [
+        call("epsilondelta1982/EchoSwift-20k-Dataset"),
+        call("sarthakdwi/EchoSwift-8k")
+    ]
+    mock_download.assert_has_calls(expected_calls, any_order=False)
+    assert mock_download.call_count == 2
+
     mock_create_config.assert_called_once_with('config.json')
     assert "Downloading the filtered ShareGPT dataset..." in result.output
     assert "Creating configuration file..." in result.output
@@ -52,7 +59,8 @@ def test_dataprep_command(mock_create_config, mock_download, runner):
 def test_dataprep_command_custom_config(mock_create_config, mock_download, runner):
     result = runner.invoke(cli, ['dataprep', '--config', 'custom_config.json'])
     assert result.exit_code == 0
-    mock_download.assert_called_once_with("sarthakdwi/EchoSwift-8k")
+
+    assert mock_download.call_count == 2
     mock_create_config.assert_called_once_with('custom_config.json')
 
 def test_start_command_without_config(runner):
@@ -151,7 +159,7 @@ def test_plot_command_with_results_dir(mock_plot, runner, tmp_path):
     result = runner.invoke(cli, ['plot', '--results-dir', str(results_dir)])
     
     assert result.exit_code == 0
-    mock_plot.assert_called_once_with(results_dir)
+    mock_plot.assert_called_once_with(results_dir, False)
     assert f"Plots have been generated and saved in {results_dir}" in result.output
 
 def test_plot_command_with_invalid_results_dir(runner):
