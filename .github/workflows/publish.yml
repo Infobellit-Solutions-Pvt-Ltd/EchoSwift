@@ -41,7 +41,7 @@ jobs:
   build-and-publish:
     needs: test
     runs-on: ubuntu-latest
-    if: github.event_name == 'release' && github.event.action == 'published'
+    if: github.event_name == 'release'
     steps:
     - uses: actions/checkout@v2
     - name: Set up Python 3.10
