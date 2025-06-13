@@ -131,7 +131,7 @@ def test_start_command_without_dataset(mock_load_config, mock_path, runner, mock
     mock_config = {
         "out_dir": "test_results",
         "base_url": "http://localhost:8000/v1/completions",
-        "tokenizer_path": "meta-llama/Meta-Llama-3-8B"
+        "tokenizer_path": "meta-llama/Meta-Llama-3-8B",
         "inference_server": "vLLM",
         "model": "meta-llama/Meta-Llama-3-8B",
         "max_requests": 5,
