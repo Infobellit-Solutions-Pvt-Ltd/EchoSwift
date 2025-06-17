@@ -3,12 +3,13 @@
 EchoSwift is a powerful and flexible tool designed for benchmarking Large Language Model (LLM) inference. It allows users to measure and analyze the performance of LLM endpoints across various metrics, including token latency, throughput, and time to first token (TTFT).
 
 ## Features
-
+- Easy-to-use CLI interface
 - Benchmark LLM inference across multiple Inference Servers
-- Measure key performance metrics: latency, throughput, and TTFT
+- Measures key performance metrics: latency, throughput, and TTFT (Time to First Token)
 - Support for varying input and output token lengths
 - Simulate concurrent users to test scalability
-- Easy-to-use CLI interface
+- Determine the optimal number of concurrent users the server can handle while maintaining:
+      TTFT < 2000 ms and Token latency < 200 ms
 - Detailed logging and progress tracking
 
 ## Supported Inference Servers
@@ -17,6 +18,7 @@ EchoSwift is a powerful and flexible tool designed for benchmarking Large Langua
   - Ollama
   - Llamacpp
   - NIMS
+  - SGLang
   
 ## Performance metrics:
 
@@ -54,43 +56,143 @@ Before running a benchmark, you need to download and filter the dataset:
 ```bash
 echoswift dataprep
 ```
+This command will:
+- Download the filtered ShareGPT dataset from Huggingface
+- Creates a default `config.json` file in your working directory
 
-This command will download the filtered ShareGPT dataset from Huggingface and creates a sample config.json
 
 ### 2. Configure the Benchmark
 
-Modify the `config.json` file in the project root directory. Here's an example configuration:
+Edit the generated `config.json` file to match your LLM server configuration. Below is a sample:
 
 ```json
 {
-  "_comment": "EchoSwift Configuration",
-  "out_dir": "test_results",
-  "base_url": "http://10.216.178.15:8000/v1/completions",
-  "inference_server": "vLLM",
-  "model": "meta-llama/Meta-Llama-3-8B",
-  "use_random_query": false,
-  "max_requests": 5,
-  "user_counts": [3],
-  "input_tokens": [32],
-  "output_tokens": [256]
+    "_comment": "EchoSwift Configuration",
+    "out_dir": "Results",
+    "base_url": "http://localhost:8000/v1/completions",
+    "tokenizer_path": "/path/to/tokenizer/",
+    "inference_server": "vLLM",
+    "model": "/model",
+    "random_prompt": true,
+    "max_requests": 1,
+    "user_counts": [
+        10
+    ],
+    "increment_user": [
+        100
+    ],
+    "input_tokens": [
+        32
+    ],
+    "output_tokens": [
+        256
+    ]
 }
+
+```
+**Note:** Modify base_url, tokenizer_path, model, and other fields according to your LLM deployment.
+
+#### 🔧 Prompt Configuration Modes
+
+EchoSwift supports two input modes depending on your test requirements:
+
+##### ✅ Fixed Input Tokens
+
+If you want to run the benchmark with a **fixed number of input tokens**:
+
+* Set `"random_prompt": false`
+* Define both `input_tokens` and `output_tokens` explicitly
+
+##### 🎲 Random Input Length
+
+If you prefer using **randomized prompts** from the dataset:
+
+* Set `"random_prompt": true`
+* Provide only `output_tokens` — EchoSwift will choose random input lengths from the dataset
+
+You can use these configuration with both:
+
+* `echoswift start` (standard benchmark)
+* `echoswift optimaluserrun` (to determine optimal concurrency)
+
+#### 👥 User Load Configuration (For `optimaluserrun`)
+
+To perform optimal user benchmarking:
+
+* Use `user_counts` to set the **initial number of concurrent users**
+* Use `increment_user` to define how many users to add per step
+
+Example:
+
+```json
+"user_counts": [10],
+"increment_user": [100]
 ```
 
-Adjust these parameters according to your LLM endpoint you're benchmarking.
+In this case, the benchmark will start with 10 users and increase by 100 in each iteration until performance thresholds are hit.
+
+### 🔤 Tokenizer Configuration
+
+EchoSwift allows two ways to configure the tokenizer used for benchmarking:
+
+#### Option 1: Use a Custom Tokenizer
+
+Set the `TOKENIZER` environment variable to the path of your desired tokenizer.
+
+#### Option 2: Use Default Fallback
+
+If `TOKENIZER` is not set or is empty, EchoSwift falls back to a built-in default tokenizer:
+
+This ensures the tool still functions, but the fallback tokenizer may not match your model's behavior exactly — use it only for testing purposes or when no specific tokenizer is required.
+
+---
+
+> ✅ **Best Practice:** Always specify the correct tokenizer that matches your LLM model for accurate benchmarking results.
+
+---
+
+Use these combinations as per your requirement to effectively benchmark your LLM endpoint.
+
 
 ### 3. Run the Benchmark
 
-To start the benchmark using the configuration from `config.json`:
+**Option A: Standard Benchmarking**
+
+Use the start command to run a basic benchmark:
 
 ```bash
-echoswift start --config path/to/your/config.json
+echoswift start --config path/to/config.json
+```
+
+**Option B: Optimal User Load Benchmarking**
+
+To find the optimal number of concurrent users for your LLM endpoint:
+
+```bash
+echoswift optimaluserrun --config path/to/config.json
 ```
 
 ### 4. Plot the Results
 
+Visualize the benchmark results using the built-in plotting tool:
+
 ```bash
 echoswift plot --results-dir path/to/your/results_dir
 ```
+
+### CLI Reference
+```bash
+echoswift [OPTIONS] COMMAND [ARGS]...
+```
+
+#### Commands
+| Command          | Description                                                                   |
+| ---------------- | ----------------------------------------------------------------------------- |
+| `dataprep`       | Download the ShareGPT dataset and create a sample config file                 |
+| `start`          | Start the EchoSwift benchmark with the given configuration                    |
+| `optimaluserrun` | Run benchmark iteratively to determine the optimal number of concurrent users |
+| `plot`           | Generate performance plots from the benchmark results                         |
+
 ## Output
 
 EchoSwift will create a `results` directory (or the directory specified in `out_dir`) containing:
