@@ -70,7 +70,7 @@ EchoSwift provides a simple CLI interface for running LLM Inference benchmarks.
 
 Below are the steps to run a sample test, assuming the generation endpoint is active.
 
-### 🔍 1. Download the Dataset and create a default `config.json`
+### 1. Download the Dataset and create a default `config.json`
 
 Before running a benchmark, you need to download and filter the dataset:
 
