@@ -62,7 +62,7 @@ echoswift dataprep
 ```
 This command will:
 - Download the filtered ShareGPT dataset from Huggingface
-- Creates a default `config.json` file in your working directory
+- Create a default `config.json` file in your working directory
 
 
 ### 2. Configure the Benchmark
