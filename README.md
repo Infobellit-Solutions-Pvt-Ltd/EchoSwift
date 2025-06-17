@@ -4,15 +4,32 @@ EchoSwift is a powerful and flexible tool designed for benchmarking Large Langua
 
 ![EchoSwift](images/Echoswift.png)
 
+## 📚 Table of Contents
+
+- [Features](#features)
+- [Supported Inference Servers](#supported-inference-servers)
+- [Performance Metrics](#performance-metrics)
+- [Installation](#installation)
+- [Usage](#usage)
+  - [Step 1: Prepare Dataset](#1-download-the-dataset-and-create-a-default-configjson)
+  - [Step 2: Configure Benchmark](#2-configure-the-benchmark)
+  - [Step 3: Run the Benchmark](#3-run-the-benchmark)
+  - [Step 4: Plot the Results](#4-plot-the-results)
+- [CLI Reference](#cli-reference)
+- [Output Structure](#output)
+- [Citation](#citation)
+
+
 ## Features
-- Easy-to-use CLI interface
-- Benchmark LLM inference across multiple Inference Servers
-- Measures key performance metrics: latency, throughput, and TTFT (Time to First Token)
-- Support for varying input and output token lengths
-- Simulate concurrent users to test scalability
-- Determine the optimal number of concurrent users the server can handle while maintaining:
-      TTFT < 2000 ms and Token latency < 200 ms
-- Detailed logging and progress tracking
+- Intuitive CLI for seamless benchmarking setup and execution
+- Evaluate LLM inference performance across various inference servers
+- Capture essential metrics including latency, throughput, and Time to First Token (TTFT)
+- Flexible testing with customizable input and output token lengths
+- Simulate concurrent users to assess server scalability under load
+- Automatically identify the optimal user load threshold while ensuring:
+    - TTFT remains under 2000 ms
+    - Token latency stays below 200 ms
+- Comprehensive logging and real-time progress indicators for enhanced observability
 
 ## Supported Inference Servers
   - TGI
@@ -53,7 +70,7 @@ EchoSwift provides a simple CLI interface for running LLM Inference benchmarks.
 
 Below are the steps to run a sample test, assuming the generation endpoint is active.
 
-### 1. Download the Dataset and create a default `config.json`
+### 🔍 1. Download the Dataset and create a default `config.json`
 
 Before running a benchmark, you need to download and filter the dataset:
 
@@ -147,7 +164,7 @@ Set the `TOKENIZER` environment variable to the path of your desired tokenizer.
 
 If `TOKENIZER` is not set or is empty, EchoSwift falls back to a built-in default tokenizer:
 
-This ensures the tool still functions, but the fallback tokenizer may not match your model's behavior exactly — use it only for testing purposes or when no specific tokenizer is required.
+This ensures the tool remains functional, but the fallback tokenizer may not align with your model's behavior. Use it only for testing or when no tokenizer is specified.
 
 ---
 

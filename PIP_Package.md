@@ -1,6 +1,22 @@
 # EchoSwift: LLM Inference Benchmarking Tool by Infobell IT
 
-EchoSwift is a powerful and flexible tool designed for benchmarking Large Language Model (LLM) inference. It allows users to measure and analyze the performance of LLM endpoints across various metrics, including token latency, throughput, and time to first token (TTFT).
+EchoSwift is a CLI-based tool designed to benchmark LLM (Large Language Model) inference endpoints. It helps evaluate performance using real-world prompts with configurable parameters and visualized results.
+
+## 📚 Table of Contents
+
+- [Features](#features)
+- [Supported Inference Servers](#supported-inference-servers)
+- [Performance Metrics](#performance-metrics)
+- [Installation](#installation)
+- [Usage](#usage)
+  - [Step 1: Prepare Dataset](#1-download-the-dataset-and-create-a-default-configjson)
+  - [Step 2: Configure Benchmark](#2-configure-the-benchmark)
+  - [Step 3: Run the Benchmark](#3-run-the-benchmark)
+  - [Step 4: Plot the Results](#4-plot-the-results)
+- [CLI Reference](#cli-reference)
+- [Output Structure](#output)
+- [Citation](#citation)
+
 
 ## Features
 - Easy-to-use CLI interface
@@ -8,8 +24,7 @@ EchoSwift is a powerful and flexible tool designed for benchmarking Large Langua
 - Measures key performance metrics: latency, throughput, and TTFT (Time to First Token)
 - Support for varying input and output token lengths
 - Simulate concurrent users to test scalability
-- Determine the optimal number of concurrent users the server can handle while maintaining:
-      TTFT < 2000 ms and Token latency < 200 ms
+- Determine the optimal number of concurrent users the server can handle while maintaining: TTFT < 2000 ms and Token latency < 200 ms
 - Detailed logging and progress tracking
 
 ## Supported Inference Servers
@@ -49,7 +64,7 @@ EchoSwift provides a simple CLI interface for running LLM Inference benchmarks.
 
 Below are the steps to run a sample test, assuming the generation endpoint is active.
 
-### 1. Download the Dataset and create a default `config.json`
+### 🔍 1. Download the Dataset and create a default `config.json`
 
 Before running a benchmark, you need to download and filter the dataset:
 
@@ -58,7 +73,7 @@ echoswift dataprep
 ```
 This command will:
 - Download the filtered ShareGPT dataset from Huggingface
-- Creates a default `config.json` file in your working directory
+- Create a default `config.json` file in your working directory
 
 
 ### 2. Configure the Benchmark
@@ -143,7 +158,7 @@ Set the `TOKENIZER` environment variable to the path of your desired tokenizer.
 
 If `TOKENIZER` is not set or is empty, EchoSwift falls back to a built-in default tokenizer:
 
-This ensures the tool still functions, but the fallback tokenizer may not match your model's behavior exactly — use it only for testing purposes or when no specific tokenizer is required.
+This ensures the tool remains functional, but the fallback tokenizer may not align with your model's behavior. Use it only for testing or when no tokenizer is specified.
 
 ---
 
