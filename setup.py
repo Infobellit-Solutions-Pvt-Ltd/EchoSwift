@@ -5,7 +5,7 @@ with open("PIP_Package.md", "r", encoding="utf-8") as fh:
 
 setup(
     name="echoswift",
-    version="2.0.1",
+    version="2.0.2",
     author="Infobell AI Team",
     author_email="sarthak@infobellit.com",
     description="LLM Inference Benchmarking Tool",
