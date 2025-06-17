@@ -2,22 +2,6 @@
 
 EchoSwift is a CLI-based tool designed to benchmark LLM (Large Language Model) inference endpoints. It helps evaluate performance using real-world prompts with configurable parameters and visualized results.
 
-## 📚 Table of Contents
-
-- [Features](#features)
-- [Supported Inference Servers](#supported-inference-servers)
-- [Performance Metrics](#performance-metrics)
-- [Installation](#installation)
-- [Usage](#usage)
-  - [Step 1: Prepare Dataset](#1-download-the-dataset-and-create-a-default-configjson)
-  - [Step 2: Configure Benchmark](#2-configure-the-benchmark)
-  - [Step 3: Run the Benchmark](#3-run-the-benchmark)
-  - [Step 4: Plot the Results](#4-plot-the-results)
-- [CLI Reference](#cli-reference)
-- [Output Structure](#output)
-- [Citation](#citation)
-
-
 ## Features
 - Easy-to-use CLI interface
 - Benchmark LLM inference across multiple Inference Servers
@@ -194,19 +178,6 @@ Visualize the benchmark results using the built-in plotting tool:
 ```bash
 echoswift plot --results-dir path/to/your/results_dir
 ```
-
-### CLI Reference
-```bash
-echoswift [OPTIONS] COMMAND [ARGS]...
-```
-
-#### Commands
-| Command          | Description                                                                   |
-| ---------------- | ----------------------------------------------------------------------------- |
-| `dataprep`       | Download the ShareGPT dataset and create a sample config file                 |
-| `start`          | Start the EchoSwift benchmark with the given configuration                    |
-| `optimaluserrun` | Run benchmark iteratively to determine the optimal number of concurrent users |
-| `plot`           | Generate performance plots from the benchmark results                         |
 
 ## Output
 
